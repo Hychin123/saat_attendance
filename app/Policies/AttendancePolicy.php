@@ -4,14 +4,18 @@ namespace App\Policies;
 
 use App\Models\Attendance;
 use App\Models\User;
+use Illuminate\Auth\Access\HandlesAuthorization;
 
 class AttendancePolicy
 {
+    use HandlesAuthorization;
+
     /**
      * Determine whether the user can view any models.
      */
     public function viewAny(User $user): bool
     {
+        // Everyone can view attendance records
         return true;
     }
 
@@ -20,7 +24,12 @@ class AttendancePolicy
      */
     public function view(User $user, Attendance $attendance): bool
     {
-        return true;
+        // Super admin can view all
+        // HR Manager can view all
+        // Users can view their own attendance
+        return $user->isSuperAdmin() 
+            || $user->role?->name === 'HR Manager'
+            || $user->id === $attendance->user_id;
     }
 
     /**
@@ -28,6 +37,7 @@ class AttendancePolicy
      */
     public function create(User $user): bool
     {
+        // All authenticated users can create attendance
         return true;
     }
 
@@ -36,8 +46,13 @@ class AttendancePolicy
      */
     public function update(User $user, Attendance $attendance): bool
     {
-        // Users can only update their own attendance
-        // Admins can update any attendance (you can add role check here)
+        // Super admin can update any attendance
+        // HR Manager can update any attendance
+        // Users can only update their own attendance on the same day
+        if ($user->isSuperAdmin() || $user->role?->name === 'HR Manager') {
+            return true;
+        }
+
         return $user->id === $attendance->user_id;
     }
 
@@ -46,8 +61,8 @@ class AttendancePolicy
      */
     public function delete(User $user, Attendance $attendance): bool
     {
-        // Only allow deletion of today's attendance
-        return $attendance->date->isToday();
+        // Only super admin and HR Manager can delete attendance
+        return $user->isSuperAdmin() || $user->role?->name === 'HR Manager';
     }
 
     /**
@@ -55,7 +70,7 @@ class AttendancePolicy
      */
     public function restore(User $user, Attendance $attendance): bool
     {
-        return true;
+        return $user->isSuperAdmin() || $user->role?->name === 'HR Manager';
     }
 
     /**
@@ -63,6 +78,7 @@ class AttendancePolicy
      */
     public function forceDelete(User $user, Attendance $attendance): bool
     {
-        return false;
+        // Only super admin can permanently delete
+        return $user->isSuperAdmin();
     }
 }

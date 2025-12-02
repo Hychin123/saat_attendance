@@ -112,6 +112,12 @@ class UserResource extends Resource
                             ->dehydrated(fn($state) => filled($state))
                             ->required(fn(string $context): bool => $context === 'create')
                             ->maxLength(255),
+
+                        Forms\Components\Toggle::make('is_super_admin')
+                            ->label('Super Admin')
+                            ->helperText('Grant super admin privileges to this user')
+                            ->visible(fn() => auth()->user()?->isSuperAdmin())
+                            ->disabled(fn(?User $record) => $record?->id === auth()->id()),
                     ])
                     ->columns(1),
             ]);
@@ -137,6 +143,15 @@ class UserResource extends Resource
                 Tables\Columns\TextColumn::make('role.name')
                     ->badge()
                     ->searchable()
+                    ->sortable(),
+
+                Tables\Columns\IconColumn::make('is_super_admin')
+                    ->label('Super Admin')
+                    ->boolean()
+                    ->trueIcon('heroicon-o-shield-check')
+                    ->falseIcon('heroicon-o-shield-exclamation')
+                    ->trueColor('success')
+                    ->falseColor('gray')
                     ->sortable(),
 
                 Tables\Columns\TextColumn::make('phone')

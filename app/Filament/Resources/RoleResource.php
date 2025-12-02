@@ -20,6 +20,12 @@ class RoleResource extends Resource
 
     protected static ?int $navigationSort = 2;
 
+    public static function canViewAny(): bool
+    {
+        return auth()->user()?->isSuperAdmin() 
+            || auth()->user()?->role?->name === 'HR Manager';
+    }
+
     public static function form(Form $form): Form
     {
         return $form
@@ -56,6 +62,20 @@ class RoleResource extends Resource
                             ->columnSpanFull(),
                     ])
                     ->columns(2),
+
+                Forms\Components\Section::make('Permissions')
+                    ->schema([
+                        Forms\Components\CheckboxList::make('permissions')
+                            ->relationship('permissions', 'display_name')
+                            ->columns(3)
+                            ->gridDirection('row')
+                            ->bulkToggleable()
+                            ->searchable()
+                            ->helperText('Select the permissions this role should have')
+                            ->visible(fn() => auth()->user()?->isSuperAdmin()),
+                    ])
+                    ->visible(fn() => auth()->user()?->isSuperAdmin())
+                    ->collapsed(),
             ]);
     }
 

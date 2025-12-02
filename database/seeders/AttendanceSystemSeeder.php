@@ -121,6 +121,7 @@ class AttendanceSystemSeeder extends Seeder
                 'name' => 'Admin User',
                 'email' => 'admin@example.com',
                 'password' => Hash::make('password'),
+                'is_super_admin' => true,
                 'age' => 40,
                 'school' => 'Business School',
                 'role_id' => 2,
