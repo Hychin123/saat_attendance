@@ -22,8 +22,27 @@ class RoleResource extends Resource
 
     public static function canViewAny(): bool
     {
-        return auth()->user()?->isSuperAdmin() 
+        return auth()->user()->hasPermission('view', 'roles') 
+            || auth()->user()->isSuperAdmin() 
             || auth()->user()?->role?->name === 'HR Manager';
+    }
+
+    public static function canCreate(): bool
+    {
+        return auth()->user()->hasPermission('create', 'roles') 
+            || auth()->user()->isSuperAdmin();
+    }
+
+    public static function canEdit($record): bool
+    {
+        return auth()->user()->hasPermission('edit', 'roles') 
+            || auth()->user()->isSuperAdmin();
+    }
+
+    public static function canDelete($record): bool
+    {
+        return auth()->user()->hasPermission('delete', 'roles') 
+            || auth()->user()->isSuperAdmin();
     }
 
     public static function form(Form $form): Form

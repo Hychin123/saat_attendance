@@ -31,7 +31,26 @@ class PermissionResource extends Resource
 
     public static function canViewAny(): bool
     {
-        return auth()->user()?->isSuperAdmin() ?? false;
+        return auth()->user()->hasPermission('view', 'permissions') 
+            || auth()->user()?->isSuperAdmin();
+    }
+
+    public static function canCreate(): bool
+    {
+        return auth()->user()->hasPermission('create', 'permissions') 
+            || auth()->user()?->isSuperAdmin();
+    }
+
+    public static function canEdit($record): bool
+    {
+        return auth()->user()->hasPermission('edit', 'permissions') 
+            || auth()->user()?->isSuperAdmin();
+    }
+
+    public static function canDelete($record): bool
+    {
+        return auth()->user()->hasPermission('delete', 'permissions') 
+            || auth()->user()?->isSuperAdmin();
     }
 
     public static function form(Form $form): Form

@@ -22,6 +22,55 @@ class AttendanceResource extends Resource
 
     protected static ?int $navigationSort = 3;
 
+    public static function canViewAny(): bool
+    {
+        return auth()->user()->hasPermission('view', 'attendances') 
+            || auth()->user()->isSuperAdmin() 
+            || auth()->user()->role?->name === 'HR Manager'
+            || true; // All users can view their own attendance
+    }
+
+    public static function canCreate(): bool
+    {
+        return auth()->user()->hasPermission('create', 'attendances') 
+            || auth()->user()->isSuperAdmin() 
+            || auth()->user()->role?->name === 'HR Manager'
+            || true; // All users can create their own attendance
+    }
+
+    public static function canEdit($record): bool
+    {
+        $user = auth()->user();
+        
+        if ($user->hasPermission('edit', 'attendances') || $user->isSuperAdmin() || $user->role?->name === 'HR Manager') {
+            return true;
+        }
+        
+        // Users can edit their own attendance
+        return $record->user_id === $user->id;
+    }
+
+    public static function canDelete($record): bool
+    {
+        return auth()->user()->hasPermission('delete', 'attendances') 
+            || auth()->user()->isSuperAdmin() 
+            || auth()->user()->role?->name === 'HR Manager';
+    }
+
+    public static function getEloquentQuery(): Builder
+    {
+        $query = parent::getEloquentQuery();
+        $user = auth()->user();
+
+        // Super admin and HR Manager can see all attendances
+        if ($user->isSuperAdmin() || $user->role?->name === 'HR Manager') {
+            return $query;
+        }
+
+        // Regular users see only their own attendance
+        return $query->where('user_id', $user->id);
+    }
+
     public static function form(Form $form): Form
     {
         return $form
@@ -33,7 +82,9 @@ class AttendanceResource extends Resource
                             ->relationship('user', 'name')
                             ->searchable()
                             ->preload()
-                            ->required(),
+                            ->required()
+                            ->default(fn() => auth()->id())
+                            ->disabled(fn() => !auth()->user()->isSuperAdmin() && auth()->user()->role?->name !== 'HR Manager'),
                         
                         Forms\Components\Select::make('role_id')
                             ->label('Role')
@@ -71,7 +122,8 @@ class AttendanceResource extends Resource
                 
                 Tables\Columns\TextColumn::make('user.name')
                     ->searchable()
-                    ->sortable(),
+                    ->sortable()
+                    ->visible(fn() => auth()->user()->isSuperAdmin() || auth()->user()->role?->name === 'HR Manager'),
                 
                 Tables\Columns\TextColumn::make('role.name')
                     ->badge()
@@ -111,12 +163,14 @@ class AttendanceResource extends Resource
                 Tables\Filters\SelectFilter::make('user')
                     ->relationship('user', 'name')
                     ->searchable()
-                    ->preload(),
+                    ->preload()
+                    ->visible(fn() => auth()->user()->isSuperAdmin() || auth()->user()->role?->name === 'HR Manager'),
                 
                 Tables\Filters\SelectFilter::make('role')
                     ->relationship('role', 'name')
                     ->searchable()
-                    ->preload(),
+                    ->preload()
+                    ->visible(fn() => auth()->user()->isSuperAdmin() || auth()->user()->role?->name === 'HR Manager'),
                 
                 Tables\Filters\Filter::make('date')
                     ->form([

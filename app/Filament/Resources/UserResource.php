@@ -11,6 +11,7 @@ use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Database\Eloquent\Builder;
 
 class UserResource extends Resource
 {
@@ -21,6 +22,48 @@ class UserResource extends Resource
     protected static ?string $navigationGroup = 'User Management';
 
     protected static ?int $navigationSort = 1;
+
+    public static function canViewAny(): bool
+    {
+        return auth()->user()->hasPermission('view', 'users') 
+            || auth()->user()->isSuperAdmin() 
+            || auth()->user()->role?->name === 'HR Manager';
+    }
+
+    public static function canCreate(): bool
+    {
+        return auth()->user()->hasPermission('create', 'users') 
+            || auth()->user()->isSuperAdmin() 
+            || auth()->user()->role?->name === 'HR Manager';
+    }
+
+    public static function canEdit($record): bool
+    {
+        return auth()->user()->hasPermission('edit', 'users') 
+            || auth()->user()->isSuperAdmin() 
+            || auth()->user()->role?->name === 'HR Manager'
+            || auth()->id() === $record->id;
+    }
+
+    public static function canDelete($record): bool
+    {
+        return auth()->user()->hasPermission('delete', 'users') 
+            || auth()->user()->isSuperAdmin();
+    }
+
+    public static function getEloquentQuery(): Builder
+    {
+        $query = parent::getEloquentQuery();
+        $user = auth()->user();
+
+        // Super admin and HR Manager can see all users
+        if ($user->isSuperAdmin() || $user->role?->name === 'HR Manager') {
+            return $query;
+        }
+
+        // Regular users see only their own profile
+        return $query->where('id', $user->id);
+    }
 
     public static function form(Form $form): Form
     {
@@ -82,6 +125,7 @@ class UserResource extends Resource
                             ->relationship('role', 'name')
                             ->searchable()
                             ->preload()
+                            ->disabled(fn(?User $record) => !auth()->user()->isSuperAdmin() && !auth()->user()->role?->name === 'HR Manager')
                             ->createOptionForm([
                                 Forms\Components\TextInput::make('name')
                                     ->required()
@@ -96,7 +140,8 @@ class UserResource extends Resource
                             ->numeric()
                             ->required()
                             ->prefix('$')
-                            ->maxValue(999999.99),
+                            ->maxValue(999999.99)
+                            ->disabled(fn() => !auth()->user()->isSuperAdmin() && !auth()->user()->role?->name === 'HR Manager'),
 
                         Forms\Components\TextInput::make('kpa')
                             ->label('KPA (Key Performance Area)')
