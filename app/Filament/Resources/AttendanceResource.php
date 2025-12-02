@@ -91,7 +91,7 @@ class AttendanceResource extends Resource
                     ->label('Hours Worked')
                     ->getStateUsing(function ($record) {
                         if ($record->time_out) {
-                            $diff = $record->time_out->diffInMinutes($record->time_in);
+                            $diff = $record->time_in->diffInMinutes($record->time_out);
                             $hours = floor($diff / 60);
                             $minutes = $diff % 60;
                             return "{$hours}h {$minutes}m";

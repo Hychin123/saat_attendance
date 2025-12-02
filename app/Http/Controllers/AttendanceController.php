@@ -70,7 +70,7 @@ class AttendanceController extends Controller
                 'time_out' => now(),
             ]);
 
-            $workHours = $attendance->time_out->diffInMinutes($attendance->time_in);
+            $workHours = $attendance->time_in->diffInMinutes($attendance->time_out);
             $hours = floor($workHours / 60);
             $minutes = $workHours % 60;
 
