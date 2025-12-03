@@ -10,6 +10,11 @@ use Filament\Widgets\StatsOverviewWidget\Stat;
 
 class AttendanceStatsOverview extends BaseWidget
 {
+    public static function canView(): bool
+    {
+        return auth()->user()->isSuperAdmin() || auth()->user()->role?->name === 'HR Manager';
+    }
+
     protected function getStats(): array
     {
         $today = Carbon::today();

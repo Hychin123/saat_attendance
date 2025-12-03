@@ -153,6 +153,77 @@ class AttendanceResource extends Resource
                     ->badge()
                     ->color(fn ($state) => $state === 'In progress' ? 'warning' : 'success'),
 
+                Tables\Columns\TextColumn::make('status')
+                    ->label('Status')
+                    ->getStateUsing(function ($record) {
+                        if (!$record->time_in) {
+                            return 'Absent';
+                        }
+                        
+                        $checkInTime = $record->time_in->format('H:i');
+                        $checkInHour = (int) $record->time_in->format('H');
+                        $checkInMinute = (int) $record->time_in->format('i');
+                        
+                        // Check if late
+                        if ($checkInHour > 8 || ($checkInHour == 8 && $checkInMinute > 30)) {
+                            return 'Late';
+                        } elseif ($checkInHour == 8 && $checkInMinute > 0) {
+                            return 'Late (Warning)';
+                        }
+                        
+                        return 'On Time';
+                    })
+                    ->badge()
+                    ->color(fn (string $state): string => match ($state) {
+                        'Absent' => 'danger',
+                        'Late' => 'danger',
+                        'Late (Warning)' => 'warning',
+                        'On Time' => 'success',
+                        default => 'gray',
+                    }),
+
+                Tables\Columns\TextColumn::make('overtime')
+                    ->label('Overtime')
+                    ->getStateUsing(function ($record) {
+                        if (!$record->time_out) {
+                            return 'N/A';
+                        }
+                        
+                        $checkOutHour = (int) $record->time_out->format('H');
+                        $checkOutMinute = (int) $record->time_out->format('i');
+                        
+                        // Calculate minutes after 5:00 PM (17:00)
+                        $totalCheckOutMinutes = ($checkOutHour * 60) + $checkOutMinute;
+                        $fivePmMinutes = 17 * 60; // 5:00 PM in minutes
+                        
+                        $otMinutes = $totalCheckOutMinutes - $fivePmMinutes;
+                        
+                        // Only count OT if >= 30 minutes
+                        if ($otMinutes >= 30) {
+                            $hours = floor($otMinutes / 60);
+                            $minutes = $otMinutes % 60;
+                            return "{$hours}h {$minutes}m";
+                        }
+                        
+                        return 'No OT';
+                    })
+                    ->badge()
+                    ->color(fn (string $state): string => $state === 'No OT' || $state === 'N/A' ? 'gray' : 'info'),
+
+                Tables\Columns\TextColumn::make('check_in_device')
+                    ->label('Check-in Device')
+                    ->limit(30)
+                    ->tooltip(fn ($record) => $record->check_in_device)
+                    ->toggleable()
+                    ->visible(fn() => auth()->user()->isSuperAdmin() || auth()->user()->role?->name === 'HR Manager'),
+
+                Tables\Columns\TextColumn::make('check_out_device')
+                    ->label('Check-out Device')
+                    ->limit(30)
+                    ->tooltip(fn ($record) => $record->check_out_device)
+                    ->toggleable()
+                    ->visible(fn() => auth()->user()->isSuperAdmin() || auth()->user()->role?->name === 'HR Manager'),
+
                 Tables\Columns\TextColumn::make('check_in_ip')
                     ->label('Check-in IP')
                     ->toggleable()

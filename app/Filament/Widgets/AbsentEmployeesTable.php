@@ -15,6 +15,11 @@ class AbsentEmployeesTable extends BaseWidget
     
     protected static ?int $sort = 3;
 
+    public static function canView(): bool
+    {
+        return auth()->user()->isSuperAdmin() || auth()->user()->role?->name === 'HR Manager';
+    }
+
     public function table(Table $table): Table
     {
         // Get IDs of users who checked in today

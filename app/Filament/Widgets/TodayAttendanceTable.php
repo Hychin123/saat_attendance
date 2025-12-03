@@ -14,6 +14,11 @@ class TodayAttendanceTable extends BaseWidget
     
     protected static ?int $sort = 2;
 
+    public static function canView(): bool
+    {
+        return auth()->user()->isSuperAdmin() || auth()->user()->role?->name === 'HR Manager';
+    }
+
     public function table(Table $table): Table
     {
         return $table
