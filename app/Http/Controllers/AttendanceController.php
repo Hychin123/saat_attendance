@@ -43,6 +43,12 @@ class AttendanceController extends Controller
         $user = User::with('role')->findOrFail($userId);
         $today = Carbon::today();
 
+        // Get device and location information
+        $ipAddress = $request->ip();
+        $latitude = $request->input('latitude');
+        $longitude = $request->input('longitude');
+        $userAgent = $request->header('User-Agent');
+
         // Check if user already has an attendance record for today
         $attendance = Attendance::where('user_id', $userId)
             ->whereDate('date', $today)
@@ -55,6 +61,10 @@ class AttendanceController extends Controller
                 'role_id' => $user->role_id,
                 'date' => $today,
                 'time_in' => now(),
+                'check_in_ip' => $ipAddress,
+                'check_in_latitude' => $latitude,
+                'check_in_longitude' => $longitude,
+                'check_in_device' => $userAgent,
             ]);
 
             return response()->json([
@@ -63,11 +73,16 @@ class AttendanceController extends Controller
                 'message' => 'Successfully checked in!',
                 'time' => $attendance->time_in->format('H:i:s'),
                 'user' => $user->name,
+                'location' => $latitude && $longitude ? "Lat: {$latitude}, Lng: {$longitude}" : 'Not captured',
             ]);
         } elseif ($attendance && !$attendance->time_out) {
             // Check-out
             $attendance->update([
                 'time_out' => now(),
+                'check_out_ip' => $ipAddress,
+                'check_out_latitude' => $latitude,
+                'check_out_longitude' => $longitude,
+                'check_out_device' => $userAgent,
             ]);
 
             $workHours = $attendance->time_in->diffInMinutes($attendance->time_out);

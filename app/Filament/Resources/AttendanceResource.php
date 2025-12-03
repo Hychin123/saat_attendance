@@ -152,6 +152,48 @@ class AttendanceResource extends Resource
                     })
                     ->badge()
                     ->color(fn ($state) => $state === 'In progress' ? 'warning' : 'success'),
+
+                Tables\Columns\TextColumn::make('check_in_ip')
+                    ->label('Check-in IP')
+                    ->toggleable(isToggledHiddenByDefault: true)
+                    ->visible(fn() => auth()->user()->isSuperAdmin() || auth()->user()->role?->name === 'HR Manager'),
+
+                Tables\Columns\TextColumn::make('check_in_latitude')
+                    ->label('Check-in Location')
+                    ->formatStateUsing(fn ($record) => 
+                        $record->check_in_latitude && $record->check_in_longitude 
+                            ? "{$record->check_in_latitude}, {$record->check_in_longitude}" 
+                            : 'N/A'
+                    )
+                    ->url(fn ($record) => 
+                        $record->check_in_latitude && $record->check_in_longitude 
+                            ? "https://www.google.com/maps?q={$record->check_in_latitude},{$record->check_in_longitude}" 
+                            : null
+                    )
+                    ->openUrlInNewTab()
+                    ->toggleable(isToggledHiddenByDefault: true)
+                    ->visible(fn() => auth()->user()->isSuperAdmin() || auth()->user()->role?->name === 'HR Manager'),
+
+                Tables\Columns\TextColumn::make('check_out_ip')
+                    ->label('Check-out IP')
+                    ->toggleable(isToggledHiddenByDefault: true)
+                    ->visible(fn() => auth()->user()->isSuperAdmin() || auth()->user()->role?->name === 'HR Manager'),
+
+                Tables\Columns\TextColumn::make('check_out_latitude')
+                    ->label('Check-out Location')
+                    ->formatStateUsing(fn ($record) => 
+                        $record->check_out_latitude && $record->check_out_longitude 
+                            ? "{$record->check_out_latitude}, {$record->check_out_longitude}" 
+                            : 'N/A'
+                    )
+                    ->url(fn ($record) => 
+                        $record->check_out_latitude && $record->check_out_longitude 
+                            ? "https://www.google.com/maps?q={$record->check_out_latitude},{$record->check_out_longitude}" 
+                            : null
+                    )
+                    ->openUrlInNewTab()
+                    ->toggleable(isToggledHiddenByDefault: true)
+                    ->visible(fn() => auth()->user()->isSuperAdmin() || auth()->user()->role?->name === 'HR Manager'),
                 
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()

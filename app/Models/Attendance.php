@@ -23,6 +23,14 @@ class Attendance extends Model
         'time_in',
         'time_out',
         'notes',
+        'check_in_ip',
+        'check_out_ip',
+        'check_in_latitude',
+        'check_in_longitude',
+        'check_out_latitude',
+        'check_out_longitude',
+        'check_in_device',
+        'check_out_device',
     ];
 
     /**

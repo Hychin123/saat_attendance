@@ -129,26 +129,55 @@
 
         // Mark attendance
         async function markAttendance() {
-
             const btn = document.getElementById('attendance-btn');
             btn.disabled = true;
-            btn.textContent = 'Processing...';
+            btn.textContent = 'Getting location...';
 
             try {
+                // Get geolocation
+                let latitude = null;
+                let longitude = null;
+
+                if (navigator.geolocation) {
+                    try {
+                        const position = await new Promise((resolve, reject) => {
+                            navigator.geolocation.getCurrentPosition(resolve, reject, {
+                                enableHighAccuracy: true,
+                                timeout: 5000,
+                                maximumAge: 0
+                            });
+                        });
+                        latitude = position.coords.latitude;
+                        longitude = position.coords.longitude;
+                    } catch (geoError) {
+                        console.warn('Geolocation error:', geoError);
+                        // Continue without location if user denies or error occurs
+                    }
+                }
+
+                btn.textContent = 'Processing...';
+
                 const response = await fetch('/attendance/process', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                         'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
                     },
-                    body: JSON.stringify({})
+                    body: JSON.stringify({
+                        latitude: latitude,
+                        longitude: longitude
+                    })
                 });
 
                 const data = await response.json();
 
                 if (data.success) {
                     const action = data.action === 'check-in' ? 'checked in' : 'checked out';
-                    showMessage(`${data.user} successfully ${action} at ${data.time}`, 'success');
+                    let message = `${data.user} successfully ${action} at ${data.time}`;
+                    if (data.location) {
+                        message += `\nLocation: ${data.location}`;
+                    }
+                    showMessage(message, 'success');
                     getUserStatus();
                 } else {
                     showMessage(data.message, 'error');
