@@ -155,7 +155,7 @@ class AttendanceResource extends Resource
 
                 Tables\Columns\TextColumn::make('check_in_ip')
                     ->label('Check-in IP')
-                    ->toggleable(isToggledHiddenByDefault: true)
+                    ->toggleable()
                     ->visible(fn() => auth()->user()->isSuperAdmin() || auth()->user()->role?->name === 'HR Manager'),
 
                 Tables\Columns\TextColumn::make('check_in_latitude')
@@ -171,12 +171,12 @@ class AttendanceResource extends Resource
                             : null
                     )
                     ->openUrlInNewTab()
-                    ->toggleable(isToggledHiddenByDefault: true)
+                    ->toggleable()
                     ->visible(fn() => auth()->user()->isSuperAdmin() || auth()->user()->role?->name === 'HR Manager'),
 
                 Tables\Columns\TextColumn::make('check_out_ip')
                     ->label('Check-out IP')
-                    ->toggleable(isToggledHiddenByDefault: true)
+                    ->toggleable()
                     ->visible(fn() => auth()->user()->isSuperAdmin() || auth()->user()->role?->name === 'HR Manager'),
 
                 Tables\Columns\TextColumn::make('check_out_latitude')
@@ -192,7 +192,7 @@ class AttendanceResource extends Resource
                             : null
                     )
                     ->openUrlInNewTab()
-                    ->toggleable(isToggledHiddenByDefault: true)
+                    ->toggleable()
                     ->visible(fn() => auth()->user()->isSuperAdmin() || auth()->user()->role?->name === 'HR Manager'),
                 
                 Tables\Columns\TextColumn::make('created_at')
