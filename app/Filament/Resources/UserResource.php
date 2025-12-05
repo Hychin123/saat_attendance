@@ -112,6 +112,7 @@ class UserResource extends Resource
 
                         Forms\Components\TextInput::make('age')
                             ->numeric()
+                            ->required()
                             ->minValue(18)
                             ->maxValue(100),
 
@@ -141,7 +142,6 @@ class UserResource extends Resource
 
                         Forms\Components\TextInput::make('salary')
                             ->numeric()
-                            ->required()
                             ->prefix('$')
                             ->maxValue(999999.99)
                             ->disabled(fn() => !auth()->user()->isSuperAdmin() && !auth()->user()->role?->name === 'HR Manager'),
