@@ -239,7 +239,7 @@ class UserResource extends Resource
                             ->withWriterType(\Maatwebsite\Excel\Excel::XLSX),
                         ExcelExport::make('pdf')
                             ->fromTable()
-                            ->withFilename(fn () => 'users-' . date('Y-m-d'))
+                            ->withFilename(fn () => 'users-' . date('Y-m-d') . '.pdf')
                             ->withWriterType(\Maatwebsite\Excel\Excel::DOMPDF),
                     ]),
             ])
