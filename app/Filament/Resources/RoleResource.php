@@ -84,14 +84,62 @@ class RoleResource extends Resource
 
                 Forms\Components\Section::make('Permissions')
                     ->schema([
-                        Forms\Components\CheckboxList::make('permissions')
-                            ->relationship('permissions', 'display_name')
-                            ->columns(3)
-                            ->gridDirection('row')
-                            ->bulkToggleable()
-                            ->searchable()
-                            ->helperText('Select the permissions this role should have')
-                            ->visible(fn() => auth()->user()?->isSuperAdmin()),
+                        Forms\Components\Tabs::make('Permissions')
+                            ->tabs([
+                                Forms\Components\Tabs\Tab::make('Attendance Management')
+                                    ->schema([
+                                        Forms\Components\Split::make([
+                                            Forms\Components\Section::make('')
+                                                ->schema([
+                                                    self::getPermissionCheckboxes('Users', 'users'),
+                                                    self::getPermissionCheckboxes('Roles', 'roles'),
+                                                    self::getPermissionCheckboxes('Permissions', 'permissions'),
+                                                ]),
+                                            Forms\Components\Section::make('')
+                                                ->schema([
+                                                    self::getPermissionCheckboxes('Attendances', 'attendances'),
+                                                    self::getPermissionCheckboxes('Shifts', 'shifts'),
+                                                ]),
+                                        ]),
+                                    ]),
+                                
+                                Forms\Components\Tabs\Tab::make('Warehouse Management')
+                                    ->schema([
+                                        Forms\Components\Split::make([
+                                            Forms\Components\Section::make('')
+                                                ->schema([
+                                                    self::getPermissionCheckboxes('Warehouses', 'warehouses'),
+                                                    self::getPermissionCheckboxes('Items', 'items'),
+                                                    self::getPermissionCheckboxes('Categories', 'categories'),
+                                                ]),
+                                            Forms\Components\Section::make('')
+                                                ->schema([
+                                                    self::getPermissionCheckboxes('Brands', 'brands'),
+                                                    self::getPermissionCheckboxes('Suppliers', 'suppliers'),
+                                                    self::getPermissionCheckboxes('Locations', 'locations'),
+                                                ]),
+                                        ]),
+                                    ]),
+                                
+                                Forms\Components\Tabs\Tab::make('Stock Operations')
+                                    ->schema([
+                                        Forms\Components\Split::make([
+                                            Forms\Components\Section::make('')
+                                                ->schema([
+                                                    self::getPermissionCheckboxes('Stocks', 'stocks'),
+                                                    self::getPermissionCheckboxes('Stock Ins', 'stock_ins'),
+                                                    self::getPermissionCheckboxes('Stock Outs', 'stock_outs'),
+                                                ]),
+                                            Forms\Components\Section::make('')
+                                                ->schema([
+                                                    self::getPermissionCheckboxes('Stock Transfers', 'stock_transfers'),
+                                                    self::getPermissionCheckboxes('Stock Adjustments', 'stock_adjustments'),
+                                                    self::getPermissionCheckboxes('Stock Movements', 'stock_movements'),
+                                                ]),
+                                        ]),
+                                    ]),
+                            ])
+                            ->columnSpanFull(),
                     ])
                     ->visible(fn() => auth()->user()?->isSuperAdmin())
                     ->collapsed(),
@@ -197,6 +245,33 @@ class RoleResource extends Resource
                 ]),
             ])
             ->defaultGroup('department');
+    }
+
+    /**
+     * Get permission checkboxes grouped by resource
+     */
+    protected static function getPermissionCheckboxes(string $label, string $resource): Forms\Components\Fieldset
+    {
+        return Forms\Components\Fieldset::make($label)
+            ->schema([
+                Forms\Components\CheckboxList::make('permissions')
+                    ->label('')
+                    ->relationship(
+                        'permissions',
+                        'display_name',
+                        fn ($query) => $query->where('resource', $resource)
+                    )
+                    ->options(function () use ($resource) {
+                        return \App\Models\Permission::where('resource', $resource)
+                            ->get()
+                            ->mapWithKeys(function ($permission) {
+                                return [$permission->id => ucfirst($permission->name) . ' ' . ucfirst(str_replace('_', ' ', $permission->resource))];
+                            });
+                    })
+                    ->columns(1)
+                    ->gridDirection('row')
+                    ->bulkToggleable(),
+            ]);
     }
 
     public static function getPages(): array
