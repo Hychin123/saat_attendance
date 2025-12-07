@@ -19,6 +19,10 @@ class LocationResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-map-pin';
 
+    protected static ?string $navigationGroup = 'Warehouse Management';
+
+    protected static ?int $navigationSort = 6;
+
     public static function form(Form $form): Form
     {
         return $form

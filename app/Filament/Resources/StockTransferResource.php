@@ -19,6 +19,10 @@ class StockTransferResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-arrow-path';
 
+    protected static ?string $navigationGroup = 'Stock Operations';
+
+    protected static ?int $navigationSort = 3;
+
     public static function form(Form $form): Form
     {
         return $form

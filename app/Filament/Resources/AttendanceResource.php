@@ -20,7 +20,7 @@ class AttendanceResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-clock';
 
-    protected static ?string $navigationGroup = 'Attendance';
+    protected static ?string $navigationGroup = 'Attendance Management';
 
     protected static ?int $navigationSort = 3;
 
