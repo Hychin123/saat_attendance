@@ -35,6 +35,8 @@ class User extends Authenticatable implements FilamentUser
         'kpa',
         'phone',
         'profile_image',
+        'telegram_chat_id',
+        'telegram_notifications',
     ];
 
     /**
@@ -59,6 +61,7 @@ class User extends Authenticatable implements FilamentUser
             'password' => 'hashed',
             'salary' => 'decimal:2',
             'is_super_admin' => 'boolean',
+            'telegram_notifications' => 'boolean',
         ];
     }
 

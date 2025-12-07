@@ -121,6 +121,21 @@ class UserResource extends Resource
                     ])
                     ->columns(2),
 
+                Forms\Components\Section::make('Telegram Notifications')
+                    ->schema([
+                        Forms\Components\TextInput::make('telegram_chat_id')
+                            ->label('Telegram Chat ID')
+                            ->maxLength(255)
+                            ->helperText('Get your Chat ID by messaging @userinfobot on Telegram'),
+                        
+                        Forms\Components\Toggle::make('telegram_notifications')
+                            ->label('Enable Telegram Notifications')
+                            ->helperText('Receive attendance alerts via Telegram')
+                            ->default(false),
+                    ])
+                    ->columns(2)
+                    ->collapsed(),
+
                 Forms\Components\Section::make('Work Information')
                     ->schema([
                         Forms\Components\Select::make('role_id')

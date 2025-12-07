@@ -38,6 +38,7 @@ use App\Policies\StockOutPolicy;
 use App\Policies\StockTransferPolicy;
 use App\Policies\StockAdjustmentPolicy;
 use App\Policies\StockMovementPolicy;
+use App\Observers\AttendanceObserver;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -54,6 +55,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // Register Observers
+        Attendance::observe(AttendanceObserver::class);
+        
         // Attendance Management Policies
         Gate::policy(Attendance::class, AttendancePolicy::class);
         Gate::policy(User::class, UserPolicy::class);
