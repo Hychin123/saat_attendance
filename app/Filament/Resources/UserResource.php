@@ -152,6 +152,71 @@ class UserResource extends Resource
                     ])
                     ->columns(2),
 
+                Forms\Components\Section::make('Shift Assignment')
+                    ->schema([
+                        Forms\Components\Repeater::make('shifts')
+                            ->relationship('shifts')
+                            ->schema([
+                                Forms\Components\Select::make('shift_id')
+                                    ->label('Shift')
+                                    ->options(\App\Models\Shift::active()->pluck('name', 'id'))
+                                    ->getOptionLabelFromRecordUsing(function ($record) {
+                                        if (!$record) return null;
+                                        return "{$record->name} ({$record->code}) - {$record->start_time} to {$record->end_time}";
+                                    })
+                                    ->searchable()
+                                    ->preload()
+                                    ->required()
+                                    ->distinct()
+                                    ->native(false),
+                                
+                                Forms\Components\DatePicker::make('effective_from')
+                                    ->label('Effective From')
+                                    ->required()
+                                    ->default(now())
+                                    ->native(false),
+                                
+                                Forms\Components\DatePicker::make('effective_to')
+                                    ->label('Effective To')
+                                    ->helperText('Leave empty for ongoing assignment')
+                                    ->native(false),
+                                
+                                Forms\Components\Toggle::make('is_primary')
+                                    ->label('Primary Shift')
+                                    ->default(true)
+                                    ->helperText('User\'s main shift for attendance'),
+                            ])
+                            ->columns(4)
+                            ->collapsible()
+                            ->itemLabel(fn (array $state): ?string => 
+                                isset($state['shift_id']) ? \App\Models\Shift::find($state['shift_id'])?->name : 'New Shift Assignment'
+                            )
+                            ->defaultItems(0)
+                            ->addActionLabel('Add Shift Assignment')
+                            ->saveRelationshipsUsing(function ($component, $state, $record) {
+                                if (!$record || !$state) {
+                                    return;
+                                }
+                                
+                                // Detach existing shifts first
+                                $record->shifts()->detach();
+                                
+                                // Attach new shifts with pivot data
+                                foreach ($state as $item) {
+                                    if (isset($item['shift_id'])) {
+                                        $record->shifts()->attach($item['shift_id'], [
+                                            'effective_from' => $item['effective_from'] ?? now(),
+                                            'effective_to' => $item['effective_to'] ?? null,
+                                            'is_primary' => $item['is_primary'] ?? true,
+                                        ]);
+                                    }
+                                }
+                            })
+                            ->dehydrated(false),
+                    ])
+                    ->collapsed()
+                    ->visible(fn() => auth()->user()->isSuperAdmin() || auth()->user()->role?->name === 'HR Manager'),
+
                 Forms\Components\Section::make('Security')
                     ->schema([
                         Forms\Components\TextInput::make('password')

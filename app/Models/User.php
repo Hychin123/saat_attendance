@@ -5,11 +5,13 @@ namespace App\Models;
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Filament\Models\Contracts\FilamentUser;
 use Filament\Panel;
+use Carbon\Carbon;
 
 class User extends Authenticatable implements FilamentUser
 {
@@ -74,6 +76,51 @@ class User extends Authenticatable implements FilamentUser
     public function attendances(): HasMany
     {
         return $this->hasMany(Attendance::class);
+    }
+
+    /**
+     * Get the shifts assigned to this user.
+     */
+    public function shifts(): BelongsToMany
+    {
+        return $this->belongsToMany(Shift::class, 'user_shifts')
+            ->withPivot('effective_from', 'effective_to', 'is_primary')
+            ->withTimestamps();
+    }
+
+    /**
+     * Get the current active shift for the user on a given date.
+     */
+    public function getCurrentShift(?Carbon $date = null): ?Shift
+    {
+        $date = $date ?? now();
+        
+        return $this->shifts()
+            ->wherePivot('effective_from', '<=', $date->format('Y-m-d'))
+            ->where(function ($query) use ($date) {
+                $query->whereNull('user_shifts.effective_to')
+                    ->orWherePivot('effective_to', '>=', $date->format('Y-m-d'));
+            })
+            ->wherePivot('is_primary', true)
+            ->where('is_active', true)
+            ->first();
+    }
+
+    /**
+     * Get all active shifts for the user on a given date.
+     */
+    public function getActiveShifts(?Carbon $date = null): \Illuminate\Database\Eloquent\Collection
+    {
+        $date = $date ?? now();
+        
+        return $this->shifts()
+            ->wherePivot('effective_from', '<=', $date->format('Y-m-d'))
+            ->where(function ($query) use ($date) {
+                $query->whereNull('user_shifts.effective_to')
+                    ->orWherePivot('effective_to', '>=', $date->format('Y-m-d'));
+            })
+            ->where('is_active', true)
+            ->get();
     }
 
     /**
