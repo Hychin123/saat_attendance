@@ -55,14 +55,14 @@ class StockTransferResource extends Resource
                     ->preload(),
                 Forms\Components\Select::make('status')
                     ->options([
-                        'pending' => 'Pending',
-                        'approved' => 'Approved',
-                        'in_transit' => 'In Transit',
-                        'completed' => 'Completed',
-                        'cancelled' => 'Cancelled',
+                        'PENDING' => 'Pending',
+                        'APPROVED' => 'Approved',
+                        'IN_TRANSIT' => 'In Transit',
+                        'COMPLETED' => 'Completed',
+                        'CANCELLED' => 'Cancelled',
                     ])
                     ->required()
-                    ->default('pending'),
+                    ->default('PENDING'),
                 Forms\Components\Textarea::make('notes')
                     ->maxLength(65535)
                     ->columnSpanFull(),
@@ -98,11 +98,11 @@ class StockTransferResource extends Resource
                 Tables\Columns\TextColumn::make('status')
                     ->badge()
                     ->color(fn (string $state): string => match ($state) {
-                        'pending' => 'warning',
-                        'approved' => 'info',
-                        'in_transit' => 'primary',
-                        'completed' => 'success',
-                        'cancelled' => 'danger',
+                        'PENDING' => 'warning',
+                        'APPROVED' => 'info',
+                        'IN_TRANSIT' => 'primary',
+                        'COMPLETED' => 'success',
+                        'CANCELLED' => 'danger',
                         default => 'gray',
                     }),
                 Tables\Columns\TextColumn::make('created_at')
