@@ -16,8 +16,17 @@ class TelegramService
         $token = config('services.telegram.bot_token');
         $this->channelId = config('services.telegram.channel_id');
         
+        Log::info('TelegramService initialized', [
+            'has_token' => !empty($token),
+            'has_channel' => !empty($this->channelId)
+        ]);
+        
         if ($token) {
-            $this->telegram = new BotApi($token);
+            try {
+                $this->telegram = new BotApi($token);
+            } catch (\Exception $e) {
+                Log::error('Failed to initialize Telegram Bot: ' . $e->getMessage());
+            }
         }
     }
 
@@ -26,18 +35,38 @@ class TelegramService
      */
     public function sendCheckInNotification($user, $attendance)
     {
-        if (!$this->telegram || !$user->telegram_chat_id) {
+        Log::info('Attempting check-in notification', [
+            'user_id' => $user->id,
+            'has_telegram' => !empty($this->telegram),
+            'has_chat_id' => !empty($user->telegram_chat_id),
+            'chat_id' => $user->telegram_chat_id
+        ]);
+        
+        if (!$this->telegram) {
+            Log::warning('Telegram bot not initialized');
+            return false;
+        }
+        
+        if (!$user->telegram_chat_id) {
+            Log::warning('User has no telegram_chat_id', ['user_id' => $user->id]);
             return false;
         }
 
         try {
             $message = $this->formatCheckInMessage($user, $attendance);
             
-            $this->telegram->sendMessage(
+            Log::info('Sending message to Telegram', [
+                'chat_id' => $user->telegram_chat_id,
+                'message_length' => strlen($message)
+            ]);
+            
+            $result = $this->telegram->sendMessage(
                 $user->telegram_chat_id,
                 $message,
                 'HTML'
             );
+            
+            Log::info('Telegram message sent successfully');
 
             // Also send to channel if configured
             if ($this->channelId) {
@@ -50,7 +79,11 @@ class TelegramService
 
             return true;
         } catch (\Exception $e) {
-            Log::error('Telegram Check-in Error: ' . $e->getMessage());
+            Log::error('Telegram Check-in Error', [
+                'error' => $e->getMessage(),
+                'user_id' => $user->id,
+                'chat_id' => $user->telegram_chat_id
+            ]);
             return false;
         }
     }
