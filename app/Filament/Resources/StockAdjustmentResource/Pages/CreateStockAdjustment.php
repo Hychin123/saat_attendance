@@ -13,16 +13,14 @@ class CreateStockAdjustment extends CreateRecord
 {
     protected static string $resource = StockAdjustmentResource::class;
     
-    protected function handleRecordCreation(array $data): Model
+    protected function afterCreate(): void
     {
-        $stockAdjustment = parent::handleRecordCreation($data);
+        $stockAdjustment = $this->record;
         
         // If status is APPROVED, update stock and create movement
         if ($stockAdjustment->status === 'APPROVED') {
             $this->processStockAdjustment($stockAdjustment);
         }
-        
-        return $stockAdjustment;
     }
     
     protected function processStockAdjustment($stockAdjustment): void

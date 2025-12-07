@@ -13,16 +13,14 @@ class CreateStockOut extends CreateRecord
 {
     protected static string $resource = StockOutResource::class;
     
-    protected function handleRecordCreation(array $data): Model
+    protected function afterCreate(): void
     {
-        $stockOut = parent::handleRecordCreation($data);
+        $stockOut = $this->record;
         
         // If status is DISPATCHED, update stock and create movements
         if ($stockOut->status === 'DISPATCHED') {
             $this->processStockOut($stockOut);
         }
-        
-        return $stockOut;
     }
     
     protected function processStockOut($stockOut): void

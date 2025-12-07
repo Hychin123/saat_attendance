@@ -13,16 +13,14 @@ class CreateStockIn extends CreateRecord
 {
     protected static string $resource = StockInResource::class;
     
-    protected function handleRecordCreation(array $data): Model
+    protected function afterCreate(): void
     {
-        $stockIn = parent::handleRecordCreation($data);
+        $stockIn = $this->record;
         
         // If status is RECEIVED, update stock and create movements
         if ($stockIn->status === 'RECEIVED') {
             $this->processStockIn($stockIn);
         }
-        
-        return $stockIn;
     }
     
     protected function processStockIn($stockIn): void

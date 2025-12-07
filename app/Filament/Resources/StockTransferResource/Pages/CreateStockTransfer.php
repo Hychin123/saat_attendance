@@ -13,16 +13,14 @@ class CreateStockTransfer extends CreateRecord
 {
     protected static string $resource = StockTransferResource::class;
     
-    protected function handleRecordCreation(array $data): Model
+    protected function afterCreate(): void
     {
-        $stockTransfer = parent::handleRecordCreation($data);
+        $stockTransfer = $this->record;
         
         // If status is COMPLETED, update stock and create movements
         if ($stockTransfer->status === 'COMPLETED') {
             $this->processStockTransfer($stockTransfer);
         }
-        
-        return $stockTransfer;
     }
     
     protected function processStockTransfer($stockTransfer): void
