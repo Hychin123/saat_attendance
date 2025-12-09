@@ -24,18 +24,21 @@ class AttendanceObserver
             // Load relationships
             $attendance->load('user.role', 'shift');
             
-            // Send check-in notification when attendance is created
-            if ($attendance->time_in && 
-                $attendance->user && 
-                $attendance->user->telegram_notifications && 
-                $attendance->user->telegram_chat_id) {
+            // Always send to channel for all check-ins
+            if ($attendance->time_in && $attendance->user) {
+                Log::info('Processing check-in for user: ' . $attendance->user->name);
                 
-                Log::info('Sending check-in notification for user: ' . $attendance->user->name);
+                // Send to channel first (always)
+                $this->telegramService->sendCheckInToChannel($attendance);
                 
-                $this->telegramService->sendCheckInNotification(
-                    $attendance->user,
-                    $attendance
-                );
+                // Also send personal notification if user has Telegram configured
+                if ($attendance->user->telegram_notifications && 
+                    $attendance->user->telegram_chat_id) {
+                    $this->telegramService->sendCheckInNotification(
+                        $attendance->user,
+                        $attendance
+                    );
+                }
             }
         } catch (\Exception $e) {
             Log::error('Observer Check-in Error: ' . $e->getMessage());
@@ -54,16 +57,21 @@ class AttendanceObserver
             // Send check-out notification when time_out is added
             if ($attendance->time_out && 
                 $attendance->wasChanged('time_out') && 
-                $attendance->user && 
-                $attendance->user->telegram_notifications && 
-                $attendance->user->telegram_chat_id) {
+                $attendance->user) {
                 
-                Log::info('Sending check-out notification for user: ' . $attendance->user->name);
+                Log::info('Processing check-out for user: ' . $attendance->user->name);
                 
-                $this->telegramService->sendCheckOutNotification(
-                    $attendance->user,
-                    $attendance
-                );
+                // Send to channel first (always)
+                $this->telegramService->sendCheckOutToChannel($attendance);
+                
+                // Also send personal notification if user has Telegram configured
+                if ($attendance->user->telegram_notifications && 
+                    $attendance->user->telegram_chat_id) {
+                    $this->telegramService->sendCheckOutNotification(
+                        $attendance->user,
+                        $attendance
+                    );
+                }
             }
         } catch (\Exception $e) {
             Log::error('Observer Check-out Error: ' . $e->getMessage());

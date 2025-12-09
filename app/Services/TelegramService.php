@@ -66,16 +66,7 @@ class TelegramService
                 'HTML'
             );
             
-            Log::info('Telegram message sent successfully');
-
-            // Also send to channel if configured
-            if ($this->channelId) {
-                $this->telegram->sendMessage(
-                    $this->channelId,
-                    $message,
-                    'HTML'
-                );
-            }
+            Log::info('Telegram personal message sent successfully to user: ' . $user->name);
 
             return true;
         } catch (\Exception $e) {
@@ -105,15 +96,8 @@ class TelegramService
                 $message,
                 'HTML'
             );
-
-            // Also send to channel if configured
-            if ($this->channelId) {
-                $this->telegram->sendMessage(
-                    $this->channelId,
-                    $message,
-                    'HTML'
-                );
-            }
+            
+            Log::info('Telegram personal checkout message sent successfully to user: ' . $user->name);
 
             return true;
         } catch (\Exception $e) {
@@ -185,6 +169,68 @@ class TelegramService
         }
 
         return $message;
+    }
+
+    /**
+     * Send check-in notification to channel only
+     */
+    public function sendCheckInToChannel($attendance)
+    {
+        if (!$this->telegram || !$this->channelId) {
+            Log::warning('Telegram channel not configured');
+            return false;
+        }
+
+        try {
+            $message = $this->formatCheckInMessage($attendance->user, $attendance);
+            
+            Log::info('Sending check-in to channel', [
+                'channel_id' => $this->channelId,
+                'user' => $attendance->user->name
+            ]);
+            
+            $this->telegram->sendMessage(
+                $this->channelId,
+                $message,
+                'HTML'
+            );
+
+            return true;
+        } catch (\Exception $e) {
+            Log::error('Telegram Channel Check-in Error: ' . $e->getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Send check-out notification to channel only
+     */
+    public function sendCheckOutToChannel($attendance)
+    {
+        if (!$this->telegram || !$this->channelId) {
+            Log::warning('Telegram channel not configured');
+            return false;
+        }
+
+        try {
+            $message = $this->formatCheckOutMessage($attendance->user, $attendance);
+            
+            Log::info('Sending check-out to channel', [
+                'channel_id' => $this->channelId,
+                'user' => $attendance->user->name
+            ]);
+            
+            $this->telegram->sendMessage(
+                $this->channelId,
+                $message,
+                'HTML'
+            );
+
+            return true;
+        } catch (\Exception $e) {
+            Log::error('Telegram Channel Check-out Error: ' . $e->getMessage());
+            return false;
+        }
     }
 
     /**
