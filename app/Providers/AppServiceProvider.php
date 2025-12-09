@@ -21,6 +21,9 @@ use App\Models\StockOut;
 use App\Models\StockTransfer;
 use App\Models\StockAdjustment;
 use App\Models\StockMovement;
+use App\Models\Sale;
+use App\Models\Payment;
+use App\Models\Commission;
 use App\Policies\AttendancePolicy;
 use App\Policies\UserPolicy;
 use App\Policies\RolePolicy;
@@ -38,7 +41,11 @@ use App\Policies\StockOutPolicy;
 use App\Policies\StockTransferPolicy;
 use App\Policies\StockAdjustmentPolicy;
 use App\Policies\StockMovementPolicy;
+use App\Policies\SalePolicy;
+use App\Policies\PaymentPolicy;
+use App\Policies\CommissionPolicy;
 use App\Observers\AttendanceObserver;
+use App\Observers\SaleObserver;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -57,6 +64,7 @@ class AppServiceProvider extends ServiceProvider
     {
         // Register Observers
         Attendance::observe(AttendanceObserver::class);
+        Sale::observe(SaleObserver::class);
         
         // Attendance Management Policies
         Gate::policy(Attendance::class, AttendancePolicy::class);
@@ -78,5 +86,10 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(StockTransfer::class, StockTransferPolicy::class);
         Gate::policy(StockAdjustment::class, StockAdjustmentPolicy::class);
         Gate::policy(StockMovement::class, StockMovementPolicy::class);
+        
+        // Sales Management Policies
+        Gate::policy(Sale::class, SalePolicy::class);
+        Gate::policy(Payment::class, PaymentPolicy::class);
+        Gate::policy(Commission::class, CommissionPolicy::class);
     }
 }
