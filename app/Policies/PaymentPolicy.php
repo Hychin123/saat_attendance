@@ -16,7 +16,7 @@ class PaymentPolicy
     public function viewAny(User $user): bool
     {
         return $user->isSuperAdmin() 
-            || $user->hasPermission('view_any', 'payment')
+            || $user->hasPermission('view', 'payments')
             || $user->role?->name === 'HR Manager'
             || $user->role?->name === 'Sales Manager'
             || $user->role?->name === 'Accountant';
@@ -28,7 +28,7 @@ class PaymentPolicy
     public function view(User $user, Payment $payment): bool
     {
         return $user->isSuperAdmin() 
-            || $user->hasPermission('view', 'payment')
+            || $user->hasPermission('view', 'payments')
             || $user->role?->name === 'HR Manager'
             || $user->role?->name === 'Sales Manager'
             || $user->role?->name === 'Accountant'
@@ -41,7 +41,7 @@ class PaymentPolicy
     public function create(User $user): bool
     {
         return $user->isSuperAdmin() 
-            || $user->hasPermission('create', 'payment')
+            || $user->hasPermission('create', 'payments')
             || $user->role?->name === 'HR Manager'
             || $user->role?->name === 'Sales Manager'
             || $user->role?->name === 'Accountant'
@@ -54,7 +54,7 @@ class PaymentPolicy
     public function update(User $user, Payment $payment): bool
     {
         return $user->isSuperAdmin() 
-            || $user->hasPermission('update', 'payment')
+            || $user->hasPermission('edit', 'payments')
             || $user->role?->name === 'HR Manager'
             || $user->role?->name === 'Accountant';
     }
@@ -65,7 +65,7 @@ class PaymentPolicy
     public function delete(User $user, Payment $payment): bool
     {
         return $user->isSuperAdmin() 
-            || $user->hasPermission('delete', 'payment')
+            || $user->hasPermission('delete', 'payments')
             || $user->role?->name === 'HR Manager'
             || $user->role?->name === 'Accountant';
     }

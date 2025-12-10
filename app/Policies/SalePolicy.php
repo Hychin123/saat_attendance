@@ -16,7 +16,7 @@ class SalePolicy
     public function viewAny(User $user): bool
     {
         return $user->isSuperAdmin() 
-            || $user->hasPermission('view_any', 'sale')
+            || $user->hasPermission('view', 'sales')
             || $user->role?->name === 'HR Manager'
             || $user->role?->name === 'Sales Manager'
             || $user->role?->name === 'Sales Agent';
@@ -28,7 +28,7 @@ class SalePolicy
     public function view(User $user, Sale $sale): bool
     {
         return $user->isSuperAdmin() 
-            || $user->hasPermission('view', 'sale')
+            || $user->hasPermission('view', 'sales')
             || $user->role?->name === 'HR Manager'
             || $user->role?->name === 'Sales Manager'
             || $user->id === $sale->agent_id
@@ -41,7 +41,7 @@ class SalePolicy
     public function create(User $user): bool
     {
         return $user->isSuperAdmin() 
-            || $user->hasPermission('create', 'sale')
+            || $user->hasPermission('create', 'sales')
             || $user->role?->name === 'HR Manager'
             || $user->role?->name === 'Sales Manager'
             || $user->role?->name === 'Sales Agent';
@@ -53,7 +53,7 @@ class SalePolicy
     public function update(User $user, Sale $sale): bool
     {
         return $user->isSuperAdmin() 
-            || $user->hasPermission('update', 'sale')
+            || $user->hasPermission('edit', 'sales')
             || $user->role?->name === 'HR Manager'
             || $user->role?->name === 'Sales Manager';
     }
@@ -64,7 +64,7 @@ class SalePolicy
     public function delete(User $user, Sale $sale): bool
     {
         return $user->isSuperAdmin() 
-            || $user->hasPermission('delete', 'sale')
+            || $user->hasPermission('delete', 'sales')
             || $user->role?->name === 'HR Manager'
             || $user->role?->name === 'Sales Manager';
     }
@@ -75,7 +75,7 @@ class SalePolicy
     public function restore(User $user, Sale $sale): bool
     {
         return $user->isSuperAdmin() 
-            || $user->hasPermission('restore', 'sale')
+            || $user->hasPermission('edit', 'sales')
             || $user->role?->name === 'HR Manager';
     }
 

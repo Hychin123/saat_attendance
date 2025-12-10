@@ -138,6 +138,21 @@ class RoleResource extends Resource
                                                 ]),
                                         ]),
                                     ]),
+                                
+                                Forms\Components\Tabs\Tab::make('Sales Management')
+                                    ->schema([
+                                        Forms\Components\Split::make([
+                                            Forms\Components\Section::make('')
+                                                ->schema([
+                                                    self::getPermissionCheckboxes('Sales', 'sales'),
+                                                    self::getPermissionCheckboxes('Payments', 'payments'),
+                                                ]),
+                                            Forms\Components\Section::make('')
+                                                ->schema([
+                                                    self::getPermissionCheckboxes('Commissions', 'commissions'),
+                                                ]),
+                                        ]),
+                                    ]),
                             ])
                             ->columnSpanFull(),
                     ])
@@ -254,23 +269,40 @@ class RoleResource extends Resource
     {
         return Forms\Components\Fieldset::make($label)
             ->schema([
-                Forms\Components\CheckboxList::make('permissions')
+                Forms\Components\CheckboxList::make("permissions_{$resource}")
                     ->label('')
-                    ->relationship(
-                        'permissions',
-                        'display_name',
-                        fn ($query) => $query->where('resource', $resource)
-                    )
                     ->options(function () use ($resource) {
                         return \App\Models\Permission::where('resource', $resource)
+                            ->orderBy('name')
                             ->get()
                             ->mapWithKeys(function ($permission) {
                                 return [$permission->id => ucfirst($permission->name) . ' ' . ucfirst(str_replace('_', ' ', $permission->resource))];
                             });
                     })
+                    ->default(function ($record) use ($resource) {
+                        if (!$record) {
+                            return [];
+                        }
+                        return $record->permissions()
+                            ->where('resource', $resource)
+                            ->pluck('permissions.id')
+                            ->toArray();
+                    })
+                    ->dehydrated(false)
+                    ->afterStateHydrated(function ($component, $state, $record) use ($resource) {
+                        if ($record) {
+                            $component->state(
+                                $record->permissions()
+                                    ->where('resource', $resource)
+                                    ->pluck('permissions.id')
+                                    ->toArray()
+                            );
+                        }
+                    })
                     ->columns(1)
                     ->gridDirection('row')
-                    ->bulkToggleable(),
+                    ->bulkToggleable()
+                    ->searchable(),
             ]);
     }
 

@@ -33,6 +33,11 @@ class PermissionSeeder extends Seeder
             'stock_transfers',
             'stock_adjustments',
             'stock_movements',
+            
+            // Sales Management
+            'sales',
+            'payments',
+            'commissions',
         ];
         
         $actions = [

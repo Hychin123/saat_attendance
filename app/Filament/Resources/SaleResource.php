@@ -253,6 +253,28 @@ class SaleResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
+            ->modifyQueryUsing(function (Builder $query) {
+                $user = auth()->user();
+                
+                // Super admin can see all sales
+                if ($user->isSuperAdmin()) {
+                    return $query;
+                }
+                
+                // HR Manager and Sales Manager can see all sales
+                if (in_array($user->role?->name, ['HR Manager', 'Sales Manager'])) {
+                    return $query;
+                }
+                
+                // All other users (including Sales Agents) can only see their own sales
+                // where they are the agent or customer
+                $query->where(function ($q) use ($user) {
+                    $q->where('agent_id', $user->id)
+                      ->orWhere('customer_id', $user->id);
+                });
+                
+                return $query;
+            })
             ->columns([
                 Tables\Columns\TextColumn::make('sale_id')
                     ->label('Sale ID')

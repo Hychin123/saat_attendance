@@ -16,7 +16,7 @@ class CommissionPolicy
     public function viewAny(User $user): bool
     {
         return $user->isSuperAdmin() 
-            || $user->hasPermission('view_any', 'commission')
+            || $user->hasPermission('view', 'commissions')
             || $user->role?->name === 'HR Manager'
             || $user->role?->name === 'Sales Manager'
             || $user->role?->name === 'Accountant';
@@ -28,7 +28,7 @@ class CommissionPolicy
     public function view(User $user, Commission $commission): bool
     {
         return $user->isSuperAdmin() 
-            || $user->hasPermission('view', 'commission')
+            || $user->hasPermission('view', 'commissions')
             || $user->role?->name === 'HR Manager'
             || $user->role?->name === 'Sales Manager'
             || $user->role?->name === 'Accountant'
@@ -41,7 +41,7 @@ class CommissionPolicy
     public function create(User $user): bool
     {
         return $user->isSuperAdmin() 
-            || $user->hasPermission('create', 'commission')
+            || $user->hasPermission('create', 'commissions')
             || $user->role?->name === 'HR Manager'
             || $user->role?->name === 'Sales Manager';
     }
@@ -52,7 +52,7 @@ class CommissionPolicy
     public function update(User $user, Commission $commission): bool
     {
         return $user->isSuperAdmin() 
-            || $user->hasPermission('update', 'commission')
+            || $user->hasPermission('edit', 'commissions')
             || $user->role?->name === 'HR Manager'
             || $user->role?->name === 'Accountant';
     }
@@ -63,7 +63,7 @@ class CommissionPolicy
     public function delete(User $user, Commission $commission): bool
     {
         return $user->isSuperAdmin() 
-            || $user->hasPermission('delete', 'commission')
+            || $user->hasPermission('delete', 'commissions')
             || $user->role?->name === 'HR Manager';
     }
 }
