@@ -60,6 +60,11 @@ class SaleResource extends Resource
                             ->options(Warehouse::whereNotNull('warehouse_name')->pluck('warehouse_name', 'id'))
                             ->searchable()
                             ->required()
+                            ->reactive()
+                            // ->afterStateUpdated(function ($state, callable $set) {
+                            //     // Reset items when warehouse changes
+                            //     $set('items', []);
+                            // })
                             ->columnSpan(1),
                         
                         Forms\Components\Select::make('status')
@@ -87,26 +92,71 @@ class SaleResource extends Resource
                             ->schema([
                                 Forms\Components\Select::make('item_id')
                                     ->label('Item')
-                                    ->options(Item::whereNotNull('item_name')->pluck('item_name', 'id'))
+                                    ->options(function (callable $get) {
+                                        $warehouseId = $get('../../warehouse_id');
+                                        
+                                        if (!$warehouseId) {
+                                            return Item::whereNotNull('item_name')->pluck('item_name', 'id');
+                                        }
+                                        
+                                        // Get items that have stock in the selected warehouse
+                                        return Item::whereHas('stocks', function ($query) use ($warehouseId) {
+                                            $query->where('warehouse_id', $warehouseId)
+                                                  ->where('quantity', '>', 0);
+                                        })->pluck('item_name', 'id');
+                                    })
                                     ->searchable()
                                     ->required()
                                     ->reactive()
-                                    ->afterStateUpdated(function ($state, Forms\Set $set) {
+                                    ->afterStateUpdated(function ($state, Forms\Set $set, callable $get) {
                                         if ($state) {
                                             $item = Item::find($state);
                                             $set('unit_price', $item?->selling_price ?? 0);
+                                            
+                                            // Get available stock quantity
+                                            $warehouseId = $get('../../warehouse_id');
+                                            if ($warehouseId) {
+                                                $stock = \App\Models\Stock::where('item_id', $state)
+                                                    ->where('warehouse_id', $warehouseId)
+                                                    ->sum('quantity');
+                                                
+                                                $set('available_stock', $stock);
+                                            }
                                         }
                                     })
+                                    ->helperText(function (callable $get) {
+                                        $availableStock = $get('available_stock');
+                                        if ($availableStock !== null) {
+                                            return "Available stock: {$availableStock}";
+                                        }
+                                        return null;
+                                    })
                                     ->columnSpan(2),
+                                
+                                Forms\Components\Hidden::make('available_stock'),
                                 
                                 Forms\Components\TextInput::make('quantity')
                                     ->numeric()
                                     ->default(1)
                                     ->required()
                                     ->reactive()
+                                    ->minValue(1)
+                                    ->maxValue(function (callable $get) {
+                                        $availableStock = $get('available_stock');
+                                        return $availableStock ?? 999999;
+                                    })
                                     ->afterStateUpdated(function ($state, $get, Forms\Set $set) {
                                         $unitPrice = $get('unit_price') ?? 0;
                                         $set('total_price', $state * $unitPrice);
+                                    })
+                                    ->helperText(function (callable $get) {
+                                        $availableStock = $get('available_stock');
+                                        $quantity = $get('quantity');
+                                        
+                                        if ($availableStock !== null && $quantity > $availableStock) {
+                                            return "⚠️ Exceeds available stock ({$availableStock})";
+                                        }
+                                        return null;
                                     })
                                     ->columnSpan(1),
                                 
@@ -133,7 +183,7 @@ class SaleResource extends Resource
                                 Forms\Components\Textarea::make('notes')
                                     ->columnSpanFull(),
                             ])
-                            ->columns(5)
+                            ->columns(6)
                             ->defaultItems(1)
                             ->addActionLabel('Add Item')
                             ->reorderable(false),

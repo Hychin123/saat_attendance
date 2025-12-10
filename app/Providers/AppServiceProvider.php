@@ -46,6 +46,8 @@ use App\Policies\PaymentPolicy;
 use App\Policies\CommissionPolicy;
 use App\Observers\AttendanceObserver;
 use App\Observers\SaleObserver;
+use App\Observers\StockTransferObserver;
+use App\Observers\StockAdjustmentObserver;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -65,6 +67,8 @@ class AppServiceProvider extends ServiceProvider
         // Register Observers
         Attendance::observe(AttendanceObserver::class);
         Sale::observe(SaleObserver::class);
+        StockTransfer::observe(StockTransferObserver::class);
+        StockAdjustment::observe(StockAdjustmentObserver::class);
         
         // Attendance Management Policies
         Gate::policy(Attendance::class, AttendancePolicy::class);

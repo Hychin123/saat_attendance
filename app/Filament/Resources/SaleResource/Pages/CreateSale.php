@@ -14,6 +14,32 @@ class CreateSale extends CreateRecord
 
     protected function mutateFormDataBeforeCreate(array $data): array
     {
+        // Validate stock availability before creating sale
+        if (isset($data['items']) && is_array($data['items'])) {
+            $warehouseId = $data['warehouse_id'];
+            
+            foreach ($data['items'] as $item) {
+                $itemModel = \App\Models\Item::find($item['item_id']);
+                
+                // Check if stock exists for this item in the warehouse
+                $stock = \App\Models\Stock::where('item_id', $item['item_id'])
+                    ->where('warehouse_id', $warehouseId)
+                    ->first();
+                
+                if (!$stock) {
+                    throw new \Exception("No stock found for item '{$itemModel->item_name}' in the selected warehouse. Please add stock first.");
+                }
+                
+                if ($stock->quantity <= 0) {
+                    throw new \Exception("Item '{$itemModel->item_name}' is out of stock (0 available). Please restock before creating a sale.");
+                }
+                
+                if ($stock->quantity < $item['quantity']) {
+                    throw new \Exception("Insufficient stock for item '{$itemModel->item_name}'. Available: {$stock->quantity}, Requested: {$item['quantity']}");
+                }
+            }
+        }
+        
         // Calculate totals
         $totalAmount = 0;
         if (isset($data['items']) && is_array($data['items'])) {
@@ -54,6 +80,13 @@ class CreateSale extends CreateRecord
                 'notes' => $item['notes'] ?? null,
             ]);
         }
+
+        // Refresh the sale to load the items, then trigger stock reduction
+        $sale->refresh();
+        $sale->load('items');
+        
+        // Manually trigger stock reduction now that items are loaded
+        app(\App\Observers\SaleObserver::class)->reduceStockAfterCreation($sale);
 
         return $sale;
     }

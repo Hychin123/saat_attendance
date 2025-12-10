@@ -14,7 +14,16 @@ class SaleObserver
      */
     public function created(Sale $sale): void
     {
-        // Reduce stock immediately when sale is created
+        // Stock reduction is now handled manually after items are created
+        // See SaleResource CreateSale page
+    }
+
+    /**
+     * Reduce stock after sale and items are created
+     * This is called manually from CreateSale page
+     */
+    public function reduceStockAfterCreation(Sale $sale): void
+    {
         $this->reduceStock($sale);
     }
 
@@ -83,34 +92,45 @@ class SaleObserver
     protected function reduceStock(Sale $sale): void
     {
         foreach ($sale->items as $item) {
-            // Build query to find stock
-            $stockQuery = DB::table('stocks')
-                ->where('item_id', $item->item_id)
-                ->where('warehouse_id', $item->warehouse_id);
-            
-            // Add location_id condition if specified
+            // Find stock record - if location_id is specified use it, otherwise get first available stock
             if ($item->location_id) {
-                $stockQuery->where('location_id', $item->location_id);
+                $stock = \App\Models\Stock::where('item_id', $item->item_id)
+                    ->where('warehouse_id', $item->warehouse_id)
+                    ->where('location_id', $item->location_id)
+                    ->first();
             } else {
-                $stockQuery->whereNull('location_id');
+                // If no location specified, get the first available stock in the warehouse
+                $stock = \App\Models\Stock::where('item_id', $item->item_id)
+                    ->where('warehouse_id', $item->warehouse_id)
+                    ->first();
+            }
+            
+            if (!$stock) {
+                throw new \Exception("Stock not found for item {$item->item_id} in warehouse {$item->warehouse_id}");
+            }
+            
+            // Check if enough stock available
+            if ($stock->quantity < $item->quantity) {
+                throw new \Exception("Insufficient stock for item {$item->item->item_name}. Available: {$stock->quantity}, Required: {$item->quantity}");
             }
             
             // Reduce stock quantity
-            $stockQuery->decrement('quantity', $item->quantity);
+            $stock->decrement('quantity', $item->quantity);
+            $stock->update(['last_updated' => now()]);
 
             // Create stock movement record
             StockMovement::create([
                 'item_id' => $item->item_id,
                 'from_warehouse_id' => $item->warehouse_id,
-                'from_location_id' => $item->location_id,
+                'from_location_id' => $stock->location_id,
                 'to_warehouse_id' => null,
                 'to_location_id' => null,
                 'quantity' => $item->quantity,
                 'movement_type' => 'OUT',
-                'reference_type' => 'SALE',
                 'reference_no' => $sale->sale_id,
                 'notes' => "Stock reduced for Sale {$sale->sale_id}",
-                'moved_by' => auth()->id(),
+                'user_id' => auth()->id() ?? 1,
+                'movement_date' => now()->toDateString(),
             ]);
         }
     }
@@ -121,20 +141,27 @@ class SaleObserver
     protected function restoreStock(Sale $sale): void
     {
         foreach ($sale->items as $item) {
-            // Build query to find stock
-            $stockQuery = DB::table('stocks')
-                ->where('item_id', $item->item_id)
-                ->where('warehouse_id', $item->warehouse_id);
-            
-            // Add location_id condition if specified
+            // Find stock record - if location_id is specified use it, otherwise get first available stock
             if ($item->location_id) {
-                $stockQuery->where('location_id', $item->location_id);
+                $stock = \App\Models\Stock::where('item_id', $item->item_id)
+                    ->where('warehouse_id', $item->warehouse_id)
+                    ->where('location_id', $item->location_id)
+                    ->first();
             } else {
-                $stockQuery->whereNull('location_id');
+                // If no location specified, get the first available stock in the warehouse
+                $stock = \App\Models\Stock::where('item_id', $item->item_id)
+                    ->where('warehouse_id', $item->warehouse_id)
+                    ->first();
+            }
+            
+            if (!$stock) {
+                // If stock doesn't exist, we can't restore (this shouldn't happen normally)
+                continue;
             }
             
             // Restore stock quantity
-            $stockQuery->increment('quantity', $item->quantity);
+            $stock->increment('quantity', $item->quantity);
+            $stock->update(['last_updated' => now()]);
 
             // Create stock movement record
             StockMovement::create([
@@ -142,13 +169,13 @@ class SaleObserver
                 'from_warehouse_id' => null,
                 'from_location_id' => null,
                 'to_warehouse_id' => $item->warehouse_id,
-                'to_location_id' => $item->location_id,
+                'to_location_id' => $stock->location_id,
                 'quantity' => $item->quantity,
                 'movement_type' => 'IN',
-                'reference_type' => 'SALE_RETURN',
                 'reference_no' => $sale->sale_id,
                 'notes' => "Stock restored from {$sale->status} Sale {$sale->sale_id}",
-                'moved_by' => auth()->id(),
+                'user_id' => auth()->id() ?? 1,
+                'movement_date' => now()->toDateString(),
             ]);
         }
     }
