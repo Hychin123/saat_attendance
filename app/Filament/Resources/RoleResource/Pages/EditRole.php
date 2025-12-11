@@ -17,6 +17,24 @@ class EditRole extends EditRecord
         ];
     }
 
+    protected function mutateFormDataBeforeFill(array $data): array
+    {
+        // Load permissions for each resource
+        $resources = ['users', 'roles', 'permissions', 'attendances', 'shifts', 
+                      'warehouses', 'items', 'categories', 'brands', 'suppliers', 'locations',
+                      'stocks', 'stock_ins', 'stock_outs', 'stock_transfers', 'stock_adjustments', 'stock_movements',
+                      'sales', 'payments', 'commissions'];
+        
+        foreach ($resources as $resource) {
+            $data["permissions_{$resource}"] = $this->record->permissions()
+                ->where('resource', $resource)
+                ->pluck('permissions.id')
+                ->toArray();
+        }
+        
+        return $data;
+    }
+
     protected function mutateFormDataBeforeSave(array $data): array
     {
         // Extract all permission fields and merge them
@@ -32,7 +50,7 @@ class EditRole extends EditRecord
         }
         
         // Store permissions temporarily
-        $this->allPermissions = $allPermissions;
+        $this->allPermissions = array_unique($allPermissions);
         
         return $data;
     }

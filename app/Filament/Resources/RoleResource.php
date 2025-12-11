@@ -279,26 +279,6 @@ class RoleResource extends Resource
                                 return [$permission->id => ucfirst($permission->name) . ' ' . ucfirst(str_replace('_', ' ', $permission->resource))];
                             });
                     })
-                    ->default(function ($record) use ($resource) {
-                        if (!$record) {
-                            return [];
-                        }
-                        return $record->permissions()
-                            ->where('resource', $resource)
-                            ->pluck('permissions.id')
-                            ->toArray();
-                    })
-                    ->dehydrated(false)
-                    ->afterStateHydrated(function ($component, $state, $record) use ($resource) {
-                        if ($record) {
-                            $component->state(
-                                $record->permissions()
-                                    ->where('resource', $resource)
-                                    ->pluck('permissions.id')
-                                    ->toArray()
-                            );
-                        }
-                    })
                     ->columns(1)
                     ->gridDirection('row')
                     ->bulkToggleable()

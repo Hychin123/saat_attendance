@@ -24,7 +24,7 @@ class CreateRole extends CreateRecord
         }
         
         // Store permissions temporarily
-        $this->allPermissions = $allPermissions;
+        $this->allPermissions = array_unique($allPermissions);
         
         return $data;
     }
