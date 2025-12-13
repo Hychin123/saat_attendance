@@ -12,14 +12,29 @@ class CreateSale extends CreateRecord
 {
     protected static string $resource = SaleResource::class;
 
-    protected function mutateFormDataBeforeCreate(array $data): array
+    protected function beforeValidate(): void
     {
+        // Get form data
+        $data = $this->form->getRawState();
+        
         // Validate stock availability before creating sale
         if (isset($data['items']) && is_array($data['items'])) {
-            $warehouseId = $data['warehouse_id'];
+            $warehouseId = $data['warehouse_id'] ?? null;
+            
+            if (!$warehouseId) {
+                throw new \Exception("Please select a warehouse first.");
+            }
             
             foreach ($data['items'] as $item) {
+                if (!isset($item['item_id']) || !isset($item['quantity'])) {
+                    continue;
+                }
+                
                 $itemModel = \App\Models\Item::find($item['item_id']);
+                
+                if (!$itemModel) {
+                    continue;
+                }
                 
                 // Check if stock exists for this item in the warehouse
                 $stock = \App\Models\Stock::where('item_id', $item['item_id'])
@@ -39,7 +54,10 @@ class CreateSale extends CreateRecord
                 }
             }
         }
-        
+    }
+
+    protected function mutateFormDataBeforeCreate(array $data): array
+    {
         // Calculate totals
         $totalAmount = 0;
         if (isset($data['items']) && is_array($data['items'])) {

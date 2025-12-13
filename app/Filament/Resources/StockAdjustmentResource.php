@@ -5,8 +5,10 @@ namespace App\Filament\Resources;
 use App\Filament\Resources\StockAdjustmentResource\Pages;
 use App\Filament\Resources\StockAdjustmentResource\RelationManagers;
 use App\Models\StockAdjustment;
+use App\Models\Location;
 use Filament\Forms;
 use Filament\Forms\Form;
+use Filament\Forms\Get;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -36,14 +38,36 @@ class StockAdjustmentResource extends Resource
                     ->relationship('warehouse', 'warehouse_name')
                     ->required()
                     ->searchable()
-                    ->preload(),
+                    ->preload()
+                    ->live(),
                 Forms\Components\Select::make('location_id')
-                    ->relationship('location', 'location_code')
+                    ->label('Location')
+                    ->options(function (Get $get) {
+                        $warehouseId = $get('warehouse_id');
+                        if (!$warehouseId) {
+                            return [];
+                        }
+                        return Location::where('warehouse_id', $warehouseId)
+                            ->where('is_active', true)
+                            ->pluck('location_code', 'id');
+                    })
                     ->required()
                     ->searchable()
                     ->preload(),
                 Forms\Components\Select::make('item_id')
-                    ->relationship('item', 'item_name')
+                    ->label('Item')
+                    ->options(function (Get $get) {
+                        $warehouseId = $get('warehouse_id');
+                        if (!$warehouseId) {
+                            return [];
+                        }
+                        
+                        // Get items that have stock in the selected warehouse
+                        return \App\Models\Item::whereHas('stocks', function ($query) use ($warehouseId) {
+                            $query->where('warehouse_id', $warehouseId)
+                                  ->where('quantity', '>', 0);
+                        })->pluck('item_name', 'id');
+                    })
                     ->required()
                     ->searchable()
                     ->preload(),

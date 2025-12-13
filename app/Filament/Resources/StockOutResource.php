@@ -87,7 +87,19 @@ class StockOutResource extends Resource
                             ->relationship()
                             ->schema([
                                 Forms\Components\Select::make('item_id')
-                                    ->relationship('item', 'item_name')
+                                    ->label('Item')
+                                    ->options(function (Get $get) {
+                                        $warehouseId = $get('../../warehouse_id');
+                                        if (!$warehouseId) {
+                                            return [];
+                                        }
+                                        
+                                        // Get items that have stock in the selected warehouse
+                                        return \App\Models\Item::whereHas('stocks', function ($query) use ($warehouseId) {
+                                            $query->where('warehouse_id', $warehouseId)
+                                                  ->where('quantity', '>', 0);
+                                        })->pluck('item_name', 'id');
+                                    })
                                     ->required()
                                     ->searchable()
                                     ->preload()

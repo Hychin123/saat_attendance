@@ -13,6 +13,63 @@ class CreateStockTransfer extends CreateRecord
 {
     protected static string $resource = StockTransferResource::class;
     
+    protected function beforeValidate(): void
+    {
+        // Get form data
+        $data = $this->form->getRawState();
+        
+        // Validate stock availability before creating transfer
+        if (isset($data['items']) && is_array($data['items'])) {
+            $fromWarehouseId = $data['from_warehouse_id'] ?? null;
+            
+            if (!$fromWarehouseId) {
+                throw new \Exception("Please select source warehouse first.");
+            }
+            
+            foreach ($data['items'] as $item) {
+                if (!isset($item['item_id']) || !isset($item['quantity'])) {
+                    continue;
+                }
+                
+                $itemModel = \App\Models\Item::find($item['item_id']);
+                
+                if (!$itemModel) {
+                    continue;
+                }
+                
+                $fromLocationId = $item['from_location_id'] ?? null;
+                $batchNumber = $item['batch_number'] ?? null;
+                
+                // Check if stock exists for this item in the source warehouse
+                $stockQuery = Stock::where('item_id', $item['item_id'])
+                    ->where('warehouse_id', $fromWarehouseId);
+                    
+                if ($fromLocationId) {
+                    $stockQuery->where('location_id', $fromLocationId);
+                }
+                
+                if ($batchNumber) {
+                    $stockQuery->where('batch_number', $batchNumber);
+                }
+                
+                $stock = $stockQuery->first();
+                
+                if (!$stock) {
+                    $batchInfo = $batchNumber ? " with batch {$batchNumber}" : "";
+                    throw new \Exception("No stock found for item '{$itemModel->item_name}' in the source warehouse/location{$batchInfo}. Please check stock availability.");
+                }
+                
+                if ($stock->quantity <= 0) {
+                    throw new \Exception("Item '{$itemModel->item_name}' is out of stock (0 available) in the source warehouse/location. Cannot create transfer.");
+                }
+                
+                if ($stock->quantity < $item['quantity']) {
+                    throw new \Exception("Insufficient stock for item '{$itemModel->item_name}' in source warehouse. Available: {$stock->quantity}, Requested: {$item['quantity']}");
+                }
+            }
+        }
+    }
+    
     protected function afterCreate(): void
     {
         $stockTransfer = $this->record;

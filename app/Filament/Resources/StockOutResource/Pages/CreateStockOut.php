@@ -13,6 +13,63 @@ class CreateStockOut extends CreateRecord
 {
     protected static string $resource = StockOutResource::class;
     
+    protected function beforeValidate(): void
+    {
+        // Get form data
+        $data = $this->form->getRawState();
+        
+        // Validate stock availability before creating stock out
+        if (isset($data['items']) && is_array($data['items'])) {
+            $warehouseId = $data['warehouse_id'] ?? null;
+            
+            if (!$warehouseId) {
+                throw new \Exception("Please select a warehouse first.");
+            }
+            
+            foreach ($data['items'] as $item) {
+                if (!isset($item['item_id']) || !isset($item['quantity'])) {
+                    continue;
+                }
+                
+                $itemModel = \App\Models\Item::find($item['item_id']);
+                
+                if (!$itemModel) {
+                    continue;
+                }
+                
+                $locationId = $item['location_id'] ?? null;
+                $batchNumber = $item['batch_number'] ?? null;
+                
+                // Check if stock exists for this item in the warehouse
+                $stockQuery = Stock::where('item_id', $item['item_id'])
+                    ->where('warehouse_id', $warehouseId);
+                    
+                if ($locationId) {
+                    $stockQuery->where('location_id', $locationId);
+                }
+                
+                if ($batchNumber) {
+                    $stockQuery->where('batch_number', $batchNumber);
+                }
+                
+                $stock = $stockQuery->first();
+                
+                if (!$stock) {
+                    $batchInfo = $batchNumber ? " with batch {$batchNumber}" : "";
+                    throw new \Exception("No stock found for item '{$itemModel->item_name}' in the selected warehouse/location{$batchInfo}. Please check stock availability.");
+                }
+                
+                if ($stock->quantity <= 0) {
+                    throw new \Exception("Item '{$itemModel->item_name}' is out of stock (0 available). Cannot create stock out.");
+                }
+                
+                if ($stock->quantity < $item['quantity']) {
+                    throw new \Exception("Insufficient stock for item '{$itemModel->item_name}'. Available: {$stock->quantity}, Requested: {$item['quantity']}");
+                }
+            }
+        }
+    }
+    
     protected function afterCreate(): void
     {
         $stockOut = $this->record;

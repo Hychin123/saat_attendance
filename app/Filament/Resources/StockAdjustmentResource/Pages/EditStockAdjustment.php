@@ -21,6 +21,18 @@ class EditStockAdjustment extends EditRecord
         ];
     }
     
+    protected function beforeValidate(): void
+    {
+        // Get form data
+        $data = $this->form->getRawState();
+        $record = $this->getRecord();
+        
+        // Validate stock before changing status to APPROVED for negative adjustments
+        if ($record->status !== 'APPROVED' && isset($data['status']) && $data['status'] === 'APPROVED') {
+            $this->validateStockBeforeAdjustment($record);
+        }
+    }
+    
     protected function handleRecordUpdate(Model $record, array $data): Model
     {
         $oldStatus = $record->status;
@@ -32,6 +44,34 @@ class EditStockAdjustment extends EditRecord
         }
         
         return $record;
+    }
+    
+    protected function validateStockBeforeAdjustment($stockAdjustment): void
+    {
+        // Only validate for negative adjustments
+        if ($stockAdjustment->quantity < 0) {
+            // Check if stock exists for this item in the warehouse
+            $stock = Stock::where('item_id', $stockAdjustment->item_id)
+                ->where('warehouse_id', $stockAdjustment->warehouse_id)
+                ->where('location_id', $stockAdjustment->location_id)
+                ->where('batch_number', $stockAdjustment->batch_number)
+                ->first();
+            
+            $itemModel = \App\Models\Item::find($stockAdjustment->item_id);
+            
+            if (!$stock) {
+                throw new \Exception("No stock found for item '{$itemModel->item_name}' in the selected warehouse/location with batch {$stockAdjustment->batch_number}. Cannot approve negative adjustment.");
+            }
+            
+            if ($stock->quantity <= 0) {
+                throw new \Exception("Item '{$itemModel->item_name}' is out of stock (0 available). Cannot approve negative adjustment.");
+            }
+            
+            $adjustmentAmount = abs($stockAdjustment->quantity);
+            if ($stock->quantity < $adjustmentAmount) {
+                throw new \Exception("Insufficient stock for item '{$itemModel->item_name}' to adjust. Available: {$stock->quantity}, Adjustment: -{$adjustmentAmount}");
+            }
+        }
     }
     
     protected function processStockAdjustment($stockAdjustment): void

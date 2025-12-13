@@ -13,6 +13,62 @@ class CreateStockAdjustment extends CreateRecord
 {
     protected static string $resource = StockAdjustmentResource::class;
     
+    protected function beforeValidate(): void
+    {
+        // Get form data
+        $data = $this->form->getRawState();
+        
+        // Validate stock availability for negative adjustments
+        if (isset($data['quantity']) && $data['quantity'] < 0) {
+            $itemId = $data['item_id'] ?? null;
+            $warehouseId = $data['warehouse_id'] ?? null;
+            $locationId = $data['location_id'] ?? null;
+            $batchNumber = $data['batch_number'] ?? null;
+            
+            if (!$itemId) {
+                throw new \Exception("Please select an item first.");
+            }
+            
+            if (!$warehouseId) {
+                throw new \Exception("Please select a warehouse first.");
+            }
+            
+            $itemModel = \App\Models\Item::find($itemId);
+            
+            if (!$itemModel) {
+                throw new \Exception("Item not found.");
+            }
+            
+            // Check if stock exists for this item in the warehouse
+            $stockQuery = Stock::where('item_id', $itemId)
+                ->where('warehouse_id', $warehouseId);
+                
+            if ($locationId) {
+                $stockQuery->where('location_id', $locationId);
+            }
+            
+            if ($batchNumber) {
+                $stockQuery->where('batch_number', $batchNumber);
+            }
+            
+            $stock = $stockQuery->first();
+            
+            if (!$stock) {
+                $batchInfo = $batchNumber ? " with batch {$batchNumber}" : "";
+                throw new \Exception("No stock found for item '{$itemModel->item_name}' in the selected warehouse/location{$batchInfo}. Cannot create negative adjustment.");
+            }
+            
+            if ($stock->quantity <= 0) {
+                throw new \Exception("Item '{$itemModel->item_name}' is out of stock (0 available). Cannot create negative adjustment.");
+            }
+            
+            $adjustmentAmount = abs($data['quantity']);
+            if ($stock->quantity < $adjustmentAmount) {
+                throw new \Exception("Insufficient stock for item '{$itemModel->item_name}' to adjust. Available: {$stock->quantity}, Adjustment: -{$adjustmentAmount}");
+            }
+        }
+    }
+    
     protected function afterCreate(): void
     {
         $stockAdjustment = $this->record;

@@ -36,6 +36,63 @@ class EditSale extends EditRecord
         return $data;
     }
 
+    protected function beforeValidate(): void
+    {
+        // Get form data
+        $data = $this->form->getRawState();
+        
+        // Validate stock availability before updating sale
+        if (isset($data['items']) && is_array($data['items'])) {
+            $warehouseId = $data['warehouse_id'] ?? null;
+            
+            if (!$warehouseId) {
+                throw new \Exception("Please select a warehouse first.");
+            }
+            
+            $originalSale = $this->getRecord();
+            $originalItems = $originalSale->items->keyBy('item_id');
+            
+            foreach ($data['items'] as $item) {
+                if (!isset($item['item_id']) || !isset($item['quantity'])) {
+                    continue;
+                }
+                
+                $itemModel = \App\Models\Item::find($item['item_id']);
+                
+                if (!$itemModel) {
+                    continue;
+                }
+                
+                // Calculate the net change in quantity (new quantity - original quantity)
+                $originalQuantity = 0;
+                if (isset($originalItems[$item['item_id']])) {
+                    $originalQuantity = $originalItems[$item['item_id']]->quantity;
+                }
+                $additionalQuantityNeeded = $item['quantity'] - $originalQuantity;
+                
+                // If we need more items, check stock
+                if ($additionalQuantityNeeded > 0) {
+                    // Check if stock exists for this item in the warehouse
+                    $stock = \App\Models\Stock::where('item_id', $item['item_id'])
+                        ->where('warehouse_id', $warehouseId)
+                        ->first();
+                    
+                    if (!$stock) {
+                        throw new \Exception("No stock found for item '{$itemModel->item_name}' in the selected warehouse. Please add stock first.");
+                    }
+                    
+                    if ($stock->quantity <= 0) {
+                        throw new \Exception("Item '{$itemModel->item_name}' is out of stock (0 available). Please restock before updating sale.");
+                    }
+                    
+                    if ($stock->quantity < $additionalQuantityNeeded) {
+                        throw new \Exception("Insufficient stock for item '{$itemModel->item_name}'. Available: {$stock->quantity}, Additional needed: {$additionalQuantityNeeded}");
+                    }
+                }
+            }
+        }
+    }
+
     protected function mutateFormDataBeforeSave(array $data): array
     {
         // Recalculate totals

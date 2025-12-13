@@ -21,6 +21,18 @@ class EditStockTransfer extends EditRecord
         ];
     }
     
+    protected function beforeValidate(): void
+    {
+        // Get form data
+        $data = $this->form->getRawState();
+        $record = $this->getRecord();
+        
+        // Validate stock before changing status to COMPLETED
+        if ($record->status !== 'COMPLETED' && isset($data['status']) && $data['status'] === 'COMPLETED') {
+            $this->validateStockBeforeTransfer($record);
+        }
+    }
+    
     protected function handleRecordUpdate(Model $record, array $data): Model
     {
         $oldStatus = $record->status;
@@ -32,6 +44,32 @@ class EditStockTransfer extends EditRecord
         }
         
         return $record;
+    }
+    
+    protected function validateStockBeforeTransfer($stockTransfer): void
+    {
+        foreach ($stockTransfer->items as $item) {
+            // Check if stock exists for this item in the source warehouse
+            $stock = Stock::where('item_id', $item->item_id)
+                ->where('warehouse_id', $stockTransfer->from_warehouse_id)
+                ->where('location_id', $item->from_location_id)
+                ->where('batch_number', $item->batch_number)
+                ->first();
+            
+            $itemModel = \App\Models\Item::find($item->item_id);
+            
+            if (!$stock) {
+                throw new \Exception("No stock found for item '{$itemModel->item_name}' in the source warehouse/location with batch {$item->batch_number}. Please check stock availability.");
+            }
+            
+            if ($stock->quantity <= 0) {
+                throw new \Exception("Item '{$itemModel->item_name}' is out of stock (0 available) in the source warehouse/location. Cannot complete transfer.");
+            }
+            
+            if ($stock->quantity < $item->quantity) {
+                throw new \Exception("Insufficient stock for item '{$itemModel->item_name}' in source warehouse. Available: {$stock->quantity}, Requested: {$item->quantity}");
+            }
+        }
     }
     
     protected function processStockTransfer($stockTransfer): void
