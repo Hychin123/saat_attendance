@@ -49,23 +49,81 @@ class MaterialAdjustmentResource extends Resource
                             ->relationship('warehouse', 'warehouse_name')
                             ->required()
                             ->searchable()
-                            ->preload(),
+                            ->preload()
+                            ->live(),
                         Forms\Components\Select::make('item_id')
-                            ->relationship('item', 'item_name')
+                            ->label('Item')
+                            ->options(function (Forms\Get $get) {
+                                $warehouseId = $get('warehouse_id');
+                                
+                                if (!$warehouseId) {
+                                    return [];
+                                }
+                                
+                                // Get items that have stock in the selected warehouse
+                                return \App\Models\Item::whereHas('stocks', function ($query) use ($warehouseId) {
+                                    $query->where('warehouse_id', $warehouseId);
+                                })->pluck('item_name', 'id');
+                            })
                             ->required()
                             ->searchable()
-                            ->preload(),
+                            ->preload()
+                            ->live()
+                            ->afterStateUpdated(function ($state, Forms\Set $set, Forms\Get $get) {
+                                if ($state) {
+                                    // Get available stock quantity
+                                    $warehouseId = $get('warehouse_id');
+                                    if ($warehouseId) {
+                                        $stock = \App\Models\Stock::where('item_id', $state)
+                                            ->where('warehouse_id', $warehouseId)
+                                            ->sum('quantity');
+                                        
+                                        $set('previous_quantity', $stock);
+                                        $set('available_stock', $stock);
+                                    }
+                                }
+                            })
+                            ->helperText(function (Forms\Get $get) {
+                                $availableStock = $get('available_stock');
+                                if ($availableStock !== null) {
+                                    return "Current stock: {$availableStock}";
+                                }
+                                return 'Select a warehouse first';
+                            }),
                         Forms\Components\Select::make('adjustment_type')
                             ->options([
                                 'add' => 'Add',
                                 'subtract' => 'Subtract',
                             ])
-                            ->required(),
+                            ->required()
+                            ->live(),
+                        Forms\Components\Hidden::make('available_stock'),
                         Forms\Components\TextInput::make('quantity')
                             ->required()
                             ->numeric()
                             ->minValue(0.01)
-                            ->step(0.01),
+                            ->step(0.01)
+                            ->live()
+                            ->afterStateUpdated(function ($state, Forms\Set $set, Forms\Get $get) {
+                                $adjustmentType = $get('adjustment_type');
+                                $previousQty = $get('previous_quantity') ?? 0;
+                                
+                                if ($adjustmentType === 'add') {
+                                    $set('new_quantity', $previousQty + $state);
+                                } elseif ($adjustmentType === 'subtract') {
+                                    $set('new_quantity', max(0, $previousQty - $state));
+                                }
+                            })
+                            ->helperText(function (Forms\Get $get) {
+                                $availableStock = $get('available_stock');
+                                $quantity = $get('quantity');
+                                $adjustmentType = $get('adjustment_type');
+                                
+                                if ($adjustmentType === 'subtract' && $availableStock !== null && $quantity > $availableStock) {
+                                    return "⚠️ Cannot subtract more than available stock ({$availableStock})";
+                                }
+                                return null;
+                            }),
                     ])->columns(2),
                 Forms\Components\Section::make('Quantity Tracking')
                     ->schema([

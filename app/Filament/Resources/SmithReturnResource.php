@@ -49,7 +49,8 @@ class SmithReturnResource extends Resource
                             ->relationship('warehouse', 'warehouse_name')
                             ->required()
                             ->searchable()
-                            ->preload(),
+                            ->preload()
+                            ->live(),
                         Forms\Components\DatePicker::make('return_date')
                             ->required()
                             ->default(now()),
@@ -58,10 +59,22 @@ class SmithReturnResource extends Resource
                     ->schema([
                         Forms\Components\Select::make('item_id')
                             ->label('Defective Item')
-                            ->relationship('item', 'item_name')
+                            ->options(function (Forms\Get $get) {
+                                $warehouseId = $get('warehouse_id');
+                                
+                                if (!$warehouseId) {
+                                    return [];
+                                }
+                                
+                                // Get all items from the selected warehouse
+                                return \App\Models\Item::whereHas('stocks', function ($query) use ($warehouseId) {
+                                    $query->where('warehouse_id', $warehouseId);
+                                })->pluck('item_name', 'id');
+                            })
                             ->required()
                             ->searchable()
-                            ->preload(),
+                            ->preload()
+                            ->helperText('Select a warehouse first'),
                         Forms\Components\TextInput::make('quantity')
                             ->label('Defective Quantity')
                             ->required()
@@ -86,13 +99,56 @@ class SmithReturnResource extends Resource
                     ->schema([
                         Forms\Components\Select::make('replacement_item_id')
                             ->label('Replacement Item')
-                            ->relationship('replacementItem', 'item_name')
+                            ->options(function (Forms\Get $get) {
+                                $warehouseId = $get('warehouse_id');
+                                
+                                if (!$warehouseId) {
+                                    return [];
+                                }
+                                
+                                // Get items that have stock in the selected warehouse
+                                return \App\Models\Item::whereHas('stocks', function ($query) use ($warehouseId) {
+                                    $query->where('warehouse_id', $warehouseId)
+                                          ->where('quantity', '>', 0);
+                                })->pluck('item_name', 'id');
+                            })
                             ->searchable()
-                            ->preload(),
+                            ->preload()
+                            ->live()
+                            ->afterStateUpdated(function ($state, Forms\Set $set, Forms\Get $get) {
+                                if ($state) {
+                                    $warehouseId = $get('warehouse_id');
+                                    if ($warehouseId) {
+                                        $stock = \App\Models\Stock::where('item_id', $state)
+                                            ->where('warehouse_id', $warehouseId)
+                                            ->sum('quantity');
+                                        
+                                        $set('replacement_available_stock', $stock);
+                                    }
+                                }
+                            })
+                            ->helperText(function (Forms\Get $get) {
+                                $stock = $get('replacement_available_stock');
+                                if ($stock !== null) {
+                                    return "Available stock: {$stock}";
+                                }
+                                return 'Select a warehouse first';
+                            }),
+                        Forms\Components\Hidden::make('replacement_available_stock'),
                         Forms\Components\TextInput::make('replacement_quantity')
                             ->numeric()
                             ->minValue(0.01)
-                            ->step(0.01),
+                            ->step(0.01)
+                            ->live()
+                            ->helperText(function (Forms\Get $get) {
+                                $availableStock = $get('replacement_available_stock');
+                                $quantity = $get('replacement_quantity');
+                                
+                                if ($availableStock !== null && $quantity > $availableStock) {
+                                    return "⚠️ Exceeds available stock ({$availableStock})";
+                                }
+                                return null;
+                            }),
                     ])->columns(2),
                 Forms\Components\Section::make('Additional Information')
                     ->schema([

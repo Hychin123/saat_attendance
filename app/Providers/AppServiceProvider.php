@@ -24,6 +24,10 @@ use App\Models\StockMovement;
 use App\Models\Sale;
 use App\Models\Payment;
 use App\Models\Commission;
+use App\Models\MaterialUsed;
+use App\Models\MaterialAdjustment;
+use App\Models\SmithReturn;
+use App\Models\SmithStockIssue;
 use App\Policies\AttendancePolicy;
 use App\Policies\UserPolicy;
 use App\Policies\RolePolicy;
@@ -44,10 +48,18 @@ use App\Policies\StockMovementPolicy;
 use App\Policies\SalePolicy;
 use App\Policies\PaymentPolicy;
 use App\Policies\CommissionPolicy;
+use App\Policies\MaterialUsedPolicy;
+use App\Policies\MaterialAdjustmentPolicy;
+use App\Policies\SmithReturnPolicy;
+use App\Policies\SmithStockIssuePolicy;
 use App\Observers\AttendanceObserver;
 use App\Observers\SaleObserver;
 use App\Observers\StockTransferObserver;
 use App\Observers\StockAdjustmentObserver;
+use App\Observers\MaterialUsedObserver;
+use App\Observers\MaterialAdjustmentObserver;
+use App\Observers\SmithReturnObserver;
+use App\Observers\SmithStockIssueObserver;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -69,6 +81,10 @@ class AppServiceProvider extends ServiceProvider
         Sale::observe(SaleObserver::class);
         StockTransfer::observe(StockTransferObserver::class);
         StockAdjustment::observe(StockAdjustmentObserver::class);
+        MaterialUsed::observe(MaterialUsedObserver::class);
+        MaterialAdjustment::observe(MaterialAdjustmentObserver::class);
+        SmithReturn::observe(SmithReturnObserver::class);
+        SmithStockIssue::observe(SmithStockIssueObserver::class);
         
         // Attendance Management Policies
         Gate::policy(Attendance::class, AttendancePolicy::class);
@@ -91,6 +107,12 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(StockAdjustment::class, StockAdjustmentPolicy::class);
         Gate::policy(StockMovement::class, StockMovementPolicy::class);
         
+        
+        // Smith Management Policies
+        Gate::policy(MaterialUsed::class, MaterialUsedPolicy::class);
+        Gate::policy(MaterialAdjustment::class, MaterialAdjustmentPolicy::class);
+        Gate::policy(SmithReturn::class, SmithReturnPolicy::class);
+        Gate::policy(SmithStockIssue::class, SmithStockIssuePolicy::class);
         // Sales Management Policies
         Gate::policy(Sale::class, SalePolicy::class);
         Gate::policy(Payment::class, PaymentPolicy::class);

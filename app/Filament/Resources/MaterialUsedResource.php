@@ -50,17 +50,63 @@ class MaterialUsedResource extends Resource
                             ->relationship('warehouse', 'warehouse_name')
                             ->required()
                             ->searchable()
-                            ->preload(),
+                            ->preload()
+                            ->live(),
                         Forms\Components\Select::make('item_id')
-                            ->relationship('item', 'item_name')
+                            ->label('Item')
+                            ->options(function (Forms\Get $get) {
+                                $warehouseId = $get('warehouse_id');
+                                
+                                if (!$warehouseId) {
+                                    return [];
+                                }
+                                
+                                // Get items that have stock in the selected warehouse
+                                return \App\Models\Item::whereHas('stocks', function ($query) use ($warehouseId) {
+                                    $query->where('warehouse_id', $warehouseId)
+                                          ->where('quantity', '>', 0);
+                                })->pluck('item_name', 'id');
+                            })
                             ->required()
                             ->searchable()
-                            ->preload(),
+                            ->preload()
+                            ->live()
+                            ->afterStateUpdated(function ($state, Forms\Set $set, Forms\Get $get) {
+                                if ($state) {
+                                    // Get available stock quantity
+                                    $warehouseId = $get('warehouse_id');
+                                    if ($warehouseId) {
+                                        $stock = \App\Models\Stock::where('item_id', $state)
+                                            ->where('warehouse_id', $warehouseId)
+                                            ->sum('quantity');
+                                        
+                                        $set('available_stock', $stock);
+                                    }
+                                }
+                            })
+                            ->helperText(function (Forms\Get $get) {
+                                $availableStock = $get('available_stock');
+                                if ($availableStock !== null) {
+                                    return "Available stock: {$availableStock}";
+                                }
+                                return 'Select a warehouse first';
+                            }),
+                        Forms\Components\Hidden::make('available_stock'),
                         Forms\Components\TextInput::make('quantity')
                             ->required()
                             ->numeric()
                             ->minValue(0.01)
-                            ->step(0.01),
+                            ->step(0.01)
+                            ->live()
+                            ->helperText(function (Forms\Get $get) {
+                                $availableStock = $get('available_stock');
+                                $quantity = $get('quantity');
+                                
+                                if ($availableStock !== null && $quantity > $availableStock) {
+                                    return "⚠️ Exceeds available stock ({$availableStock})";
+                                }
+                                return null;
+                            }),
                         Forms\Components\TextInput::make('unit')
                             ->maxLength(255),
                     ])->columns(2),
