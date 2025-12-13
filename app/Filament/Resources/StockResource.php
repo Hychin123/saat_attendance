@@ -5,8 +5,10 @@ namespace App\Filament\Resources;
 use App\Filament\Resources\StockResource\Pages;
 use App\Filament\Resources\StockResource\RelationManagers;
 use App\Models\Stock;
+use App\Models\Location;
 use Filament\Forms;
 use Filament\Forms\Form;
+use Filament\Forms\Get;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -36,9 +38,19 @@ class StockResource extends Resource
                     ->relationship('warehouse', 'warehouse_name')
                     ->required()
                     ->searchable()
-                    ->preload(),
+                    ->preload()
+                    ->live(),
                 Forms\Components\Select::make('location_id')
-                    ->relationship('location', 'location_code')
+                    ->label('Location')
+                    ->options(function (Get $get) {
+                        $warehouseId = $get('warehouse_id');
+                        if (!$warehouseId) {
+                            return [];
+                        }
+                        return Location::where('warehouse_id', $warehouseId)
+                            ->where('is_active', true)
+                            ->pluck('location_code', 'id');
+                    })
                     ->required()
                     ->searchable()
                     ->preload(),
