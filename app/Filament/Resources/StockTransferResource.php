@@ -98,7 +98,41 @@ class StockTransferResource extends Resource
                                     ->required()
                                     ->searchable()
                                     ->preload()
+                                    ->live()
+                                    ->afterStateUpdated(function ($state, Forms\Set $set, Get $get) {
+                                        if ($state) {
+                                            // Get available stock quantity
+                                            $warehouseId = $get('../../from_warehouse_id');
+                                            $locationId = $get('from_location_id');
+                                            $batchNumber = $get('batch_number');
+                                            
+                                            if ($warehouseId) {
+                                                $query = \App\Models\Stock::where('item_id', $state)
+                                                    ->where('warehouse_id', $warehouseId);
+                                                    
+                                                if ($locationId) {
+                                                    $query->where('location_id', $locationId);
+                                                }
+                                                
+                                                if ($batchNumber) {
+                                                    $query->where('batch_number', $batchNumber);
+                                                }
+                                                
+                                                $stock = $query->sum('quantity');
+                                                $set('available_stock', $stock);
+                                            }
+                                        }
+                                    })
+                                    ->helperText(function (Get $get) {
+                                        $availableStock = $get('available_stock');
+                                        if ($availableStock !== null) {
+                                            return "Available stock in source warehouse: {$availableStock}";
+                                        }
+                                        return null;
+                                    })
                                     ->columnSpan(2),
+                                
+                                Forms\Components\Hidden::make('available_stock'),
                                 
                                 Forms\Components\Select::make('from_location_id')
                                     ->label('From Location')
@@ -112,7 +146,30 @@ class StockTransferResource extends Resource
                                             ->pluck('location_code', 'id');
                                     })
                                     ->required()
-                                    ->searchable(),
+                                    ->searchable()
+                                    ->live()
+                                    ->afterStateUpdated(function ($state, Forms\Set $set, Get $get) {
+                                        // Recalculate available stock when location changes
+                                        $itemId = $get('item_id');
+                                        $warehouseId = $get('../../from_warehouse_id');
+                                        $batchNumber = $get('batch_number');
+                                        
+                                        if ($itemId && $warehouseId) {
+                                            $query = \App\Models\Stock::where('item_id', $itemId)
+                                                ->where('warehouse_id', $warehouseId);
+                                                
+                                            if ($state) {
+                                                $query->where('location_id', $state);
+                                            }
+                                            
+                                            if ($batchNumber) {
+                                                $query->where('batch_number', $batchNumber);
+                                            }
+                                            
+                                            $stock = $query->sum('quantity');
+                                            $set('available_stock', $stock);
+                                        }
+                                    }),
                                 
                                 Forms\Components\Select::make('to_location_id')
                                     ->label('To Location')
@@ -132,10 +189,47 @@ class StockTransferResource extends Resource
                                     ->numeric()
                                     ->required()
                                     ->minValue(1)
-                                    ->default(1),
+                                    ->default(1)
+                                    ->live()
+                                    ->maxValue(function (Get $get) {
+                                        $availableStock = $get('available_stock');
+                                        return $availableStock ?? 999999;
+                                    })
+                                    ->helperText(function (Get $get) {
+                                        $availableStock = $get('available_stock');
+                                        $quantity = $get('quantity');
+                                        
+                                        if ($availableStock !== null && $quantity > $availableStock) {
+                                            return "⚠️ Exceeds available stock ({$availableStock})";
+                                        }
+                                        return null;
+                                    }),
                                 
                                 Forms\Components\TextInput::make('batch_number')
-                                    ->label('Batch No.'),
+                                    ->label('Batch No.')
+                                    ->live()
+                                    ->afterStateUpdated(function ($state, Forms\Set $set, Get $get) {
+                                        // Recalculate available stock when batch changes
+                                        $itemId = $get('item_id');
+                                        $warehouseId = $get('../../from_warehouse_id');
+                                        $locationId = $get('from_location_id');
+                                        
+                                        if ($itemId && $warehouseId) {
+                                            $query = \App\Models\Stock::where('item_id', $itemId)
+                                                ->where('warehouse_id', $warehouseId);
+                                                
+                                            if ($locationId) {
+                                                $query->where('location_id', $locationId);
+                                            }
+                                            
+                                            if ($state) {
+                                                $query->where('batch_number', $state);
+                                            }
+                                            
+                                            $stock = $query->sum('quantity');
+                                            $set('available_stock', $stock);
+                                        }
+                                    }),
                             ])
                             ->columns(3)
                             ->defaultItems(1)

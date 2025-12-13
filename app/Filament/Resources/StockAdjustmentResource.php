@@ -53,7 +53,30 @@ class StockAdjustmentResource extends Resource
                     })
                     ->required()
                     ->searchable()
-                    ->preload(),
+                    ->preload()
+                    ->live()
+                    ->afterStateUpdated(function ($state, Forms\Set $set, Get $get) {
+                        // Recalculate available stock when location changes
+                        $itemId = $get('item_id');
+                        $warehouseId = $get('warehouse_id');
+                        $batchNumber = $get('batch_number');
+                        
+                        if ($itemId && $warehouseId) {
+                            $query = \App\Models\Stock::where('item_id', $itemId)
+                                ->where('warehouse_id', $warehouseId);
+                                
+                            if ($state) {
+                                $query->where('location_id', $state);
+                            }
+                            
+                            if ($batchNumber) {
+                                $query->where('batch_number', $batchNumber);
+                            }
+                            
+                            $stock = $query->sum('quantity');
+                            $set('available_stock', $stock);
+                        }
+                    }),
                 Forms\Components\Select::make('item_id')
                     ->label('Item')
                     ->options(function (Get $get) {
@@ -70,19 +93,97 @@ class StockAdjustmentResource extends Resource
                     })
                     ->required()
                     ->searchable()
-                    ->preload(),
+                    ->preload()
+                    ->live()
+                    ->afterStateUpdated(function ($state, Forms\Set $set, Get $get) {
+                        if ($state) {
+                            // Get available stock quantity
+                            $warehouseId = $get('warehouse_id');
+                            $locationId = $get('location_id');
+                            $batchNumber = $get('batch_number');
+                            
+                            if ($warehouseId) {
+                                $query = \App\Models\Stock::where('item_id', $state)
+                                    ->where('warehouse_id', $warehouseId);
+                                    
+                                if ($locationId) {
+                                    $query->where('location_id', $locationId);
+                                }
+                                
+                                if ($batchNumber) {
+                                    $query->where('batch_number', $batchNumber);
+                                }
+                                
+                                $stock = $query->sum('quantity');
+                                $set('available_stock', $stock);
+                            }
+                        }
+                    })
+                    ->helperText(function (Get $get) {
+                        $availableStock = $get('available_stock');
+                        if ($availableStock !== null) {
+                            return "Current stock: {$availableStock}";
+                        }
+                        return null;
+                    }),
+                Forms\Components\Hidden::make('available_stock'),
                 Forms\Components\Select::make('adjustment_type')
                     ->options([
                         'add' => 'Add',
                         'subtract' => 'Subtract',
                     ])
-                    ->required(),
+                    ->required()
+                    ->live(),
                 Forms\Components\TextInput::make('quantity')
                     ->required()
                     ->numeric()
-                    ->minValue(1),
+                    ->minValue(1)
+                    ->live()
+                    ->maxValue(function (Get $get) {
+                        $adjustmentType = $get('adjustment_type');
+                        $availableStock = $get('available_stock');
+                        
+                        // Only limit for subtract operations
+                        if ($adjustmentType === 'subtract' && $availableStock !== null) {
+                            return $availableStock;
+                        }
+                        return 999999;
+                    })
+                    ->helperText(function (Get $get) {
+                        $adjustmentType = $get('adjustment_type');
+                        $availableStock = $get('available_stock');
+                        $quantity = $get('quantity');
+                        
+                        if ($adjustmentType === 'subtract' && $availableStock !== null && $quantity > $availableStock) {
+                            return "⚠️ Exceeds current stock ({$availableStock})";
+                        }
+                        return null;
+                    }),
                 Forms\Components\TextInput::make('batch_number')
-                    ->maxLength(255),
+                    ->maxLength(255)
+                    ->live()
+                    ->afterStateUpdated(function ($state, Forms\Set $set, Get $get) {
+                        // Recalculate available stock when batch changes
+                        $itemId = $get('item_id');
+                        $warehouseId = $get('warehouse_id');
+                        $locationId = $get('location_id');
+                        
+                        if ($itemId && $warehouseId) {
+                            $query = \App\Models\Stock::where('item_id', $itemId)
+                                ->where('warehouse_id', $warehouseId);
+                                
+                            if ($locationId) {
+                                $query->where('location_id', $locationId);
+                            }
+                            
+                            if ($state) {
+                                $query->where('batch_number', $state);
+                            }
+                            
+                            $stock = $query->sum('quantity');
+                            $set('available_stock', $stock);
+                        }
+                    }),
                 Forms\Components\DatePicker::make('adjustment_date')
                     ->required()
                     ->default(now()),
