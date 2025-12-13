@@ -20,6 +20,7 @@ class DatabaseSeeder extends Seeder
             AttendanceSystemSeeder::class,
             SalesPermissionsSeeder::class,
             SmithRoleSeeder::class,
+            SmithPermissionsSeeder::class,
         ]);
     }
 }

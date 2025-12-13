@@ -67,6 +67,7 @@ class RoleResource extends Resource
                                 'IT' => 'IT',
                                 'Marketing' => 'Marketing',
                                 'Operations' => 'Operations',
+                                'Production' => 'Production',
                                 'Customer Service' => 'Customer Service',
                                 'Management' => 'Management',
                                 'Other' => 'Other',
@@ -153,6 +154,22 @@ class RoleResource extends Resource
                                                 ]),
                                         ]),
                                     ]),
+                                
+                                Forms\Components\Tabs\Tab::make('Smith Management')
+                                    ->schema([
+                                        Forms\Components\Split::make([
+                                            Forms\Components\Section::make('')
+                                                ->schema([
+                                                    self::getPermissionCheckboxes('Material Used', 'material_used'),
+                                                    self::getPermissionCheckboxes('Material Adjustments', 'material_adjustments'),
+                                                ]),
+                                            Forms\Components\Section::make('')
+                                                ->schema([
+                                                    self::getPermissionCheckboxes('Smith Returns', 'smith_returns'),
+                                                    self::getPermissionCheckboxes('Smith Stock Issues', 'smith_stock_issues'),
+                                                ]),
+                                        ]),
+                                    ]),
                             ])
                             ->columnSpanFull(),
                     ])
@@ -179,6 +196,7 @@ class RoleResource extends Resource
                         'IT' => 'primary',
                         'Marketing' => 'danger',
                         'Operations' => 'warning',
+                        'Production' => 'info',
                         'Customer Service' => 'info',
                         'Management' => 'primary',
                         default => 'gray',
@@ -197,7 +215,7 @@ class RoleResource extends Resource
                         'Human Resources' => 'heroicon-o-users',
                         'IT' => 'heroicon-o-computer-desktop',
                         'Marketing' => 'heroicon-o-megaphone',
-                        'Operations' => 'heroicon-o-cog',
+                        'Production' => 'heroicon-o-wrench-screwdriver',
                         'Customer Service' => 'heroicon-o-chat-bubble-left-right',
                         'Management' => 'heroicon-o-briefcase',
                         default => 'heroicon-o-tag',
@@ -211,6 +229,7 @@ class RoleResource extends Resource
                         'IT' => 'primary',
                         'Marketing' => 'danger',
                         'Operations' => 'warning',
+                        'Production' => 'info',
                         'Customer Service' => 'info',
                         'Management' => 'primary',
                         default => 'gray',
@@ -241,6 +260,7 @@ class RoleResource extends Resource
                         'Accounting' => 'Accounting',
                         'Human Resources' => 'Human Resources',
                         'IT' => 'IT',
+                        'Production' => 'Production',
                         'Marketing' => 'Marketing',
                         'Operations' => 'Operations',
                         'Customer Service' => 'Customer Service',
