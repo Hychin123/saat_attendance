@@ -109,8 +109,13 @@ class CreateSale extends CreateRecord
         return $sale;
     }
 
+    protected static bool $canCreateAnother = false;
+
     protected function getRedirectUrl(): string
     {
-        return $this->getResource()::getUrl('index');
+        $resource = static::getResource();
+        return $resource::getUrl('index');
     }
+
+    
 }

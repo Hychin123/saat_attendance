@@ -20,6 +20,11 @@ class EditStockTransfer extends EditRecord
             Actions\DeleteAction::make(),
         ];
     }
+    protected function getRedirectUrl(): string
+    {
+        $resource = static::getResource();
+        return $resource::getUrl('index');
+    }
     
     protected function beforeValidate(): void
     {

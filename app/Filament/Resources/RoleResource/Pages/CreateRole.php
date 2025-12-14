@@ -36,4 +36,12 @@ class CreateRole extends CreateRecord
             $this->record->permissions()->sync($this->allPermissions);
         }
     }
+
+    protected static bool $canCreateAnother = false;
+
+    protected function getRedirectUrl(): string
+    {
+        $resource = static::getResource();
+        return $resource::getUrl('index');
+    }
 }

@@ -19,6 +19,12 @@ class EditSale extends EditRecord
         ];
     }
 
+    protected function getRedirectUrl(): string
+    {
+        $resource = static::getResource();
+        return $resource::getUrl('index');
+    }
+
     protected function mutateFormDataBeforeFill(array $data): array
     {
         // Load sale items
@@ -142,8 +148,4 @@ class EditSale extends EditRecord
         return $record;
     }
 
-    protected function getRedirectUrl(): string
-    {
-        return $this->getResource()::getUrl('index');
-    }
 }

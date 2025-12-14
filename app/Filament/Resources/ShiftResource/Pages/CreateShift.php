@@ -9,8 +9,11 @@ class CreateShift extends CreateRecord
 {
     protected static string $resource = ShiftResource::class;
 
+    protected static bool $canCreateAnother = false;
+
     protected function getRedirectUrl(): string
     {
-        return $this->getResource()::getUrl('index');
+        $resource = static::getResource();
+        return $resource::getUrl('index');
     }
 }

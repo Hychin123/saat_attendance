@@ -12,6 +12,14 @@ use Illuminate\Database\Eloquent\Model;
 class CreateStockOut extends CreateRecord
 {
     protected static string $resource = StockOutResource::class;
+
+    protected static bool $canCreateAnother = false;
+
+    protected function getRedirectUrl(): string
+    {
+        $resource = static::getResource();
+        return $resource::getUrl('index');
+    }
     
     protected function beforeValidate(): void
     {

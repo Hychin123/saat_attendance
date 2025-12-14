@@ -10,6 +10,11 @@ class EditStock extends EditRecord
 {
     protected static string $resource = StockResource::class;
 
+    protected function getRedirectUrl(): string
+    {
+        $resource = static::getResource();
+        return $resource::getUrl('index');
+    }
     protected function getHeaderActions(): array
     {
         return [

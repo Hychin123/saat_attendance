@@ -9,8 +9,11 @@ class CreateCommission extends CreateRecord
 {
     protected static string $resource = CommissionResource::class;
 
+    protected static bool $canCreateAnother = false;
+
     protected function getRedirectUrl(): string
     {
-        return $this->getResource()::getUrl('index');
+        $resource = static::getResource();
+        return $resource::getUrl('index');
     }
 }

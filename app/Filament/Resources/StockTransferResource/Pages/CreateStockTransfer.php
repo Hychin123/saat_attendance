@@ -12,6 +12,14 @@ use Illuminate\Database\Eloquent\Model;
 class CreateStockTransfer extends CreateRecord
 {
     protected static string $resource = StockTransferResource::class;
+
+    protected static bool $canCreateAnother = false;
+
+    protected function getRedirectUrl(): string
+    {
+        $resource = static::getResource();
+        return $resource::getUrl('index');
+    }
     
     protected function beforeValidate(): void
     {

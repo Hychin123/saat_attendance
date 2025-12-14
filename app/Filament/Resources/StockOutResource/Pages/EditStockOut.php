@@ -13,6 +13,11 @@ class EditStockOut extends EditRecord
 {
     protected static string $resource = StockOutResource::class;
 
+    protected function getRedirectUrl(): string
+    {
+        $resource = static::getResource();
+        return $resource::getUrl('index');
+    }
     protected function getHeaderActions(): array
     {
         return [

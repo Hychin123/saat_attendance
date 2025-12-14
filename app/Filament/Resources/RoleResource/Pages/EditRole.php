@@ -17,6 +17,12 @@ class EditRole extends EditRecord
         ];
     }
 
+    protected function getRedirectUrl(): string
+    {
+        $resource = static::getResource();
+        return $resource::getUrl('index');
+    }
+
     protected function mutateFormDataBeforeFill(array $data): array
     {
         // Load permissions for each resource

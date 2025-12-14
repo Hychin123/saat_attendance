@@ -126,4 +126,12 @@ class CreateStockAdjustment extends CreateRecord
             'movement_date' => $stockAdjustment->adjustment_date,
         ]);
     }
+
+    protected static bool $canCreateAnother = false;
+
+    protected function getRedirectUrl(): string
+    {
+        $resource = static::getResource();
+        return $resource::getUrl('index');
+    }
 }
