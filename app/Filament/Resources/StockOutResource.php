@@ -74,8 +74,7 @@ class StockOutResource extends Resource
                             ->required(),
                         
                         Forms\Components\Textarea::make('reason')
-                            ->required()
-                            ->columnSpanFull(),
+                            ->required(),
                         
                         Forms\Components\Textarea::make('notes')
                             ->columnSpanFull(),
@@ -134,8 +133,7 @@ class StockOutResource extends Resource
                                             return "Available stock: {$availableStock}";
                                         }
                                         return null;
-                                    })
-                                    ->columnSpan(2),
+                                    }),
                                 
                                 Forms\Components\Hidden::make('available_stock'),
                                 
@@ -174,8 +172,7 @@ class StockOutResource extends Resource
                                             $stock = $query->sum('quantity');
                                             $set('available_stock', $stock);
                                         }
-                                    })
-                                    ->columnSpan(2),
+                                    }),
                                 
                                 Forms\Components\TextInput::make('quantity')
                                     ->numeric()
@@ -223,7 +220,7 @@ class StockOutResource extends Resource
                                         }
                                     }),
                             ])
-                            ->columns(3)
+                            ->columns(2)
                             ->defaultItems(1)
                             ->addActionLabel('Add Item')
                             ->reorderable(false)
