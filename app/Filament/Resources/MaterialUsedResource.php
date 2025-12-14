@@ -138,8 +138,7 @@ class MaterialUsedResource extends Resource
                         Forms\Components\Select::make('approved_by')
                             ->relationship('approver', 'name')
                             ->searchable()
-                            ->preload()
-                            ->disabled(),
+                            ->preload(),
                         Forms\Components\DateTimePicker::make('approved_at')
                             ->disabled(),
                     ])->columns(3)->collapsed(),

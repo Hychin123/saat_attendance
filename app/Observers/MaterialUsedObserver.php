@@ -78,13 +78,14 @@ class MaterialUsedObserver
             // Create stock movement record
             StockMovement::create([
                 'item_id' => $materialUsed->item_id,
-                'warehouse_id' => $materialUsed->warehouse_id,
-                'location_id' => $stock->location_id,
-                'movement_type' => 'out',
+                'from_warehouse_id' => $materialUsed->warehouse_id,
+                'from_location_id' => $stock->location_id,
+                'movement_type' => 'OUT',
                 'quantity' => $materialUsed->quantity,
-                'reference_type' => 'material_used',
-                'reference_id' => $materialUsed->id,
+                'reference_no' => $materialUsed->reference_no,
                 'notes' => "Material used by smith: {$materialUsed->user->name}. Project: {$materialUsed->project_name}",
+                'user_id' => auth()->id() ?? $materialUsed->user_id,
+                'movement_date' => $materialUsed->usage_date,
             ]);
         });
     }
@@ -107,13 +108,14 @@ class MaterialUsedObserver
                 // Create stock movement record
                 StockMovement::create([
                     'item_id' => $materialUsed->item_id,
-                    'warehouse_id' => $materialUsed->warehouse_id,
-                    'location_id' => $stock->location_id,
-                    'movement_type' => 'in',
+                    'from_warehouse_id' => $materialUsed->warehouse_id,
+                    'from_location_id' => $stock->location_id,
+                    'movement_type' => 'IN',
                     'quantity' => $materialUsed->quantity,
-                    'reference_type' => 'material_used_cancelled',
-                    'reference_id' => $materialUsed->id,
+                    'reference_no' => $materialUsed->reference_no,
                     'notes' => "Material usage cancelled/deleted - stock restored",
+                    'user_id' => auth()->id() ?? $materialUsed->user_id,
+                    'movement_date' => now(),
                 ]);
             }
         });
