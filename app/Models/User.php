@@ -10,10 +10,12 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Filament\Models\Contracts\FilamentUser;
+use Filament\Models\Contracts\HasAvatar;
 use Filament\Panel;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Storage;
 
-class User extends Authenticatable implements FilamentUser
+class User extends Authenticatable implements FilamentUser, HasAvatar
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasFactory, Notifiable;
@@ -154,5 +156,21 @@ class User extends Authenticatable implements FilamentUser
     public function canAccessPanel(Panel $panel): bool
     {
         return true; // You can add custom logic here
+    }
+
+    /**
+     * Get the user's name for Filament.
+     */
+    public function getFilamentName(): string
+    {
+        return $this->name ?? $this->email;
+    }
+
+    /**
+     * Get the user's avatar URL for Filament.
+     */
+    public function getFilamentAvatarUrl(): ?string
+    {
+        return $this->profile_image ? Storage::url($this->profile_image) : null;
     }
 }
