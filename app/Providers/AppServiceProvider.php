@@ -60,6 +60,7 @@ use App\Observers\MaterialUsedObserver;
 use App\Observers\MaterialAdjustmentObserver;
 use App\Observers\SmithReturnObserver;
 use App\Observers\SmithStockIssueObserver;
+use App\Observers\StockObserver;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -85,6 +86,7 @@ class AppServiceProvider extends ServiceProvider
         MaterialAdjustment::observe(MaterialAdjustmentObserver::class);
         SmithReturn::observe(SmithReturnObserver::class);
         SmithStockIssue::observe(SmithStockIssueObserver::class);
+        Stock::observe(StockObserver::class);
         
         // Attendance Management Policies
         Gate::policy(Attendance::class, AttendancePolicy::class);

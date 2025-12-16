@@ -41,9 +41,10 @@ class AdminPanelProvider extends PanelProvider
             ->id('admin')
             ->path('admin')
             ->login(\App\Filament\Pages\Auth\Login::class)
-            // ->databaseNotifications()
             ->brandLogo(asset('images/logo_saat.png'))
             ->brandLogoHeight('3rem')
+            ->databaseNotifications()
+            ->databaseNotificationsPolling('10s')
             ->font('Suwannaphum')
             // ->theme('resources/css/filament/admin/theme.css')
             ->colors([
