@@ -16,6 +16,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Filament\Forms\Components\Section;
 use Filament\Forms\Components\Repeater;
 use Filament\Tables\Filters\SelectFilter;
+use Cheesegrits\FilamentGoogleMaps\Fields\Map;
 
 class SaleResource extends Resource
 {
@@ -85,6 +86,75 @@ class SaleResource extends Resource
                             ->visible(fn($get) => $get('status') === Sale::STATUS_COMPLETED)
                             ->columnSpan(1),
                     ])->columns(2),
+
+                Section::make('Customer Information')
+                    ->schema([
+                        Forms\Components\TextInput::make('customer_name')
+                            ->label('Customer Name')
+                            ->maxLength(255)
+                            ->columnSpan(1),
+                        
+                        Forms\Components\Select::make('customer_gender')
+                            ->label('Gender')
+                            ->options([
+                                'Male' => 'Male',
+                                'Female' => 'Female',
+                                'Other' => 'Other',
+                            ])
+                            ->columnSpan(1),
+                        
+                        Forms\Components\TextInput::make('customer_phone')
+                            ->label('Phone Number')
+                            ->tel()
+                            ->maxLength(20)
+                            ->columnSpan(1),
+                        
+                        Forms\Components\TextInput::make('customer_location')
+                            ->label('Location')
+                            ->maxLength(255)
+                            ->columnSpanFull(),
+                        
+                        Map::make('location')
+                            ->label('Map Location')
+                            ->defaultLocation([11.5564, 104.9282]) // Phnom Penh coordinates
+                            ->defaultZoom(12)
+                            ->draggable()
+                            ->clickable()
+                            ->mapControls([
+                                'mapTypeControl'    => true,
+                                'scaleControl'      => true,
+                                'streetViewControl' => true,
+                                'rotateControl'     => true,
+                                'fullscreenControl' => true,
+                                'zoomControl'       => true,
+                            ])
+                            ->height('400px')
+                            ->columnSpanFull()
+                            ->afterStateUpdated(function ($state, callable $get, callable $set) {
+                                $set('latitude', $state['lat'] ?? null);
+                                $set('longitude', $state['lng'] ?? null);
+                            })
+                            ->reactive()
+                            ->helperText('Click or drag the marker to set the location'),
+                        
+                        Forms\Components\Hidden::make('latitude'),
+                        Forms\Components\Hidden::make('longitude'),
+                        
+                        Forms\Components\TextInput::make('location_product')
+                            ->label('Product Location')
+                            ->maxLength(255)
+                            ->columnSpan(1),
+                        
+                        Forms\Components\TextInput::make('water_filter_cabinet_id')
+                            ->label('Water Filter Cabinet ID')
+                            ->maxLength(255)
+                            ->columnSpan(1),
+                        
+                        Forms\Components\TextInput::make('board_id')
+                            ->label('Board ID')
+                            ->maxLength(255)
+                            ->columnSpan(1),
+                    ])->columns(2)->collapsible(),
 
                 Section::make('Sale Items')
                     ->schema([
@@ -286,6 +356,21 @@ class SaleResource extends Resource
                     ->label('Customer')
                     ->searchable()
                     ->sortable(),
+                
+                Tables\Columns\TextColumn::make('customer_name')
+                    ->label('Customer Name')
+                    ->searchable()
+                    ->toggleable(),
+                
+                Tables\Columns\TextColumn::make('customer_phone')
+                    ->label('Phone')
+                    ->searchable()
+                    ->toggleable(),
+                
+                Tables\Columns\TextColumn::make('customer_location')
+                    ->label('Location')
+                    ->searchable()
+                    ->toggleable(isToggledHiddenByDefault: true),
                 
                 Tables\Columns\TextColumn::make('agent.name')
                     ->label('Agent')

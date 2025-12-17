@@ -60,6 +60,7 @@ class AdminPanelProvider extends PanelProvider
                 \App\Filament\Widgets\AttendanceStatsOverview::class,
                 \App\Filament\Widgets\TodayAttendanceTable::class,
                 \App\Filament\Widgets\AbsentEmployeesTable::class,
+                \App\Filament\Widgets\SalesMapWidget::class,
             ])
             ->middleware([
                 EncryptCookies::class,

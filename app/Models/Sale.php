@@ -21,6 +21,15 @@ class Sale extends Model
     protected $fillable = [
         'sale_id',
         'customer_id',
+        'customer_name',
+        'customer_gender',
+        'customer_phone',
+        'customer_location',
+        'latitude',
+        'longitude',
+        'location_product',
+        'water_filter_cabinet_id',
+        'board_id',
         'agent_id',
         'warehouse_id',
         'total_amount',
@@ -33,6 +42,10 @@ class Sale extends Model
         'completed_date',
         'status',
         'notes',
+    ];
+
+    protected $appends = [
+        'location',
     ];
 
     protected $casts = [
@@ -138,6 +151,34 @@ class Sale extends Model
         $this->total_amount = $this->items()->sum(DB::raw('quantity * unit_price'));
         $this->net_total = $this->total_amount - $this->discount + $this->tax;
         $this->remaining_amount = $this->net_total - $this->deposit_amount;
+    }
+
+    /**
+     * Google Maps Integration
+     */
+    public static function getLatLngAttributes(): array
+    {
+        return [
+            'lat' => 'latitude',
+            'lng' => 'longitude',
+        ];
+    }
+
+    public function getLocationAttribute(): array
+    {
+        return [
+            'lat' => $this->latitude ? round(floatval($this->latitude), 8) : 0,
+            'lng' => $this->longitude ? round(floatval($this->longitude), 8) : 0,
+        ];
+    }
+
+    public function setLocationAttribute(?array $value): void
+    {
+        if (is_array($value)) {
+            $this->attributes['latitude'] = $value['lat'] ?? null;
+            $this->attributes['longitude'] = $value['lng'] ?? null;
+            unset($this->attributes['location']);
+        }
     }
 
     public function isFullyPaid(): bool
