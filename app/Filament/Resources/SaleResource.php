@@ -17,6 +17,7 @@ use Filament\Forms\Components\Section;
 use Filament\Forms\Components\Repeater;
 use Filament\Tables\Filters\SelectFilter;
 use Cheesegrits\FilamentGoogleMaps\Fields\Map;
+use Filament\Notifications\Notification;
 
 class SaleResource extends Resource
 {
@@ -42,7 +43,7 @@ class SaleResource extends Resource
                             ->required(),
                         
                         Forms\Components\Select::make('customer_id')
-                            ->label('Customer')
+                            ->label('Sale Name')
                             ->options(User::whereNotNull('name')->pluck('name', 'id'))
                             ->searchable()
                             ->required()
@@ -424,8 +425,7 @@ class SaleResource extends Resource
                 Tables\Columns\TextColumn::make('created_at')
                     ->label('Created')
                     ->dateTime()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
+                    ->sortable(),
             ])
             ->filters([
                 SelectFilter::make('status')
@@ -460,6 +460,48 @@ class SaleResource extends Resource
                     }),
             ])
             ->actions([
+                Tables\Actions\Action::make('create_machines')
+                    ->label('Create Machines')
+                    ->icon('heroicon-o-cpu-chip')
+                    ->color('success')
+                    ->visible(fn (Sale $record) => $record->status === Sale::STATUS_COMPLETED && $record->machines()->count() === 0)
+                    ->requiresConfirmation()
+                    ->action(function (Sale $record) {
+                        // Load items with relationships
+                        $record->load('items.item.category');
+                        
+                        // Create machines
+                        $observer = app(\App\Observers\SaleObserver::class);
+                        $reflection = new \ReflectionClass($observer);
+                        $method = $reflection->getMethod('createMachinesForSale');
+                        $method->setAccessible(true);
+                        $method->invoke($observer, $record);
+                        
+                        // Count created machines
+                        $machineCount = $record->machines()->count();
+                        
+                        if ($machineCount > 0) {
+                            Notification::make()
+                                ->title('Machines created successfully')
+                                ->body("{$machineCount} machine(s) created for this sale")
+                                ->success()
+                                ->send();
+                        } else {
+                            Notification::make()
+                                ->title('No machines created')
+                                ->body('No water vending machines found in this sale')
+                                ->warning()
+                                ->send();
+                        }
+                    }),
+                
+                Tables\Actions\ViewAction::make()
+                    ->label('View Machines')
+                    ->icon('heroicon-o-eye')
+                    ->color('info')
+                    ->visible(fn (Sale $record) => $record->machines()->count() > 0)
+                    ->url(fn (Sale $record) => '/admin/machines?tableFilters[sale_id][value]=' . $record->sale_id),
+                
                 Tables\Actions\EditAction::make(),
                 Tables\Actions\DeleteAction::make(),
             ])

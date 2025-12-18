@@ -5,6 +5,8 @@ namespace App\Observers;
 use App\Models\Sale;
 use App\Models\Commission;
 use App\Models\StockMovement;
+use App\Models\Machine;
+use App\Models\Item;
 use Illuminate\Support\Facades\DB;
 
 class SaleObserver
@@ -16,6 +18,12 @@ class SaleObserver
     {
         // Stock reduction is now handled manually after items are created
         // See SaleResource CreateSale page
+        
+        // If sale is created with COMPLETED status, create machines
+        if ($sale->status === Sale::STATUS_COMPLETED) {
+            $this->createMachinesForSale($sale);
+            $this->generateCommission($sale);
+        }
     }
 
     /**
@@ -25,6 +33,11 @@ class SaleObserver
     public function reduceStockAfterCreation(Sale $sale): void
     {
         $this->reduceStock($sale);
+        
+        // Also create machines if sale is completed
+        if ($sale->status === Sale::STATUS_COMPLETED) {
+            $this->createMachinesForSale($sale);
+        }
     }
 
     /**
@@ -44,6 +57,7 @@ class SaleObserver
             // COMPLETED: Generate commission when sale is completed
             if ($newStatus === Sale::STATUS_COMPLETED && $oldStatus !== Sale::STATUS_COMPLETED) {
                 $this->generateCommission($sale);
+                $this->createMachinesForSale($sale);
                 
                 // Set completed date if not set
                 if (!$sale->completed_date) {
@@ -203,5 +217,71 @@ class SaleObserver
                 'status' => Commission::STATUS_PENDING,
             ]);
         }
+    }
+
+    /**
+     * Create machine records for water vending machines in the sale
+     */
+    protected function createMachinesForSale(Sale $sale): void
+    {
+        // Check if machines already created
+        if ($sale->machines()->count() > 0) {
+            return;
+        }
+
+        // Ensure items are loaded
+        if (!$sale->relationLoaded('items')) {
+            $sale->load('items.item.category');
+        }
+
+        $saleItems = $sale->items;
+
+        foreach ($saleItems as $saleItem) {
+            $item = $saleItem->item;
+            
+            if (!$item) {
+                continue; // Skip if item not found
+            }
+            
+            // Check if item is a water vending machine
+            if ($this->isWaterVendingMachine($item)) {
+                // Create a machine for each quantity
+                for ($i = 0; $i < $saleItem->quantity; $i++) {
+                    Machine::create([
+                        'sale_id' => $sale->sale_id,
+                        'customer_id' => $sale->customer_id,
+                        'model' => $item->item_name,
+                        'install_date' => $sale->completed_date ?? now(),
+                        'status' => Machine::STATUS_ACTIVE,
+                        'notes' => "Created from Sale {$sale->sale_id}",
+                    ]);
+                }
+            }
+        }
+    }
+
+    /**
+     * Determine if an item is a water vending machine
+     * Customize this logic based on your needs
+     */
+    protected function isWaterVendingMachine(Item $item): bool
+    {
+        // Option 1: Check by category name
+        if ($item->category && stripos($item->category->name, 'vending') !== false) {
+            return true;
+        }
+
+        // Option 2: Check by item name
+        if (stripos($item->item_name, 'vending') !== false || 
+            stripos($item->item_name, 'water machine') !== false) {
+            return true;
+        }
+
+        // Option 3: You can add a specific field in items table like 'is_machine'
+        // if (isset($item->is_machine) && $item->is_machine) {
+        //     return true;
+        // }
+
+        return false;
     }
 }

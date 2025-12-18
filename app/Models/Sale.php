@@ -143,6 +143,11 @@ class Sale extends Model
         return $this->hasMany(Commission::class, 'sale_id', 'sale_id');
     }
 
+    public function machines(): HasMany
+    {
+        return $this->hasMany(Machine::class, 'sale_id', 'sale_id');
+    }
+
     /**
      * Helper methods
      */
