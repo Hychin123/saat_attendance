@@ -116,6 +116,15 @@ class UserResource extends Resource
                             ->minValue(18)
                             ->maxValue(100),
 
+                        Forms\Components\Select::make('gender')
+                            ->options([
+                                'male' => 'Male',
+                                'female' => 'Female',
+                                'other' => 'Other',
+                            ])
+                            ->native(false)
+                            ->required(),
+
                         Forms\Components\TextInput::make('school')
                             ->maxLength(255),
                     ])
@@ -287,6 +296,17 @@ class UserResource extends Resource
                     ->toggleable(),
 
                 Tables\Columns\TextColumn::make('age')
+                    ->sortable()
+                    ->toggleable(),
+
+                Tables\Columns\TextColumn::make('gender')
+                    ->badge()
+                    ->colors([
+                        'primary' => 'male',
+                        'danger' => 'female',
+                        'warning' => 'other',
+                    ])
+                    ->formatStateUsing(fn (string $state): string => ucfirst($state))
                     ->sortable()
                     ->toggleable(),
 
