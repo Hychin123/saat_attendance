@@ -46,6 +46,7 @@ class SaleResource extends Resource
                             ->label('Sale Name')
                             ->options(User::whereNotNull('name')->pluck('name', 'id'))
                             ->searchable()
+                            ->default(auth()->id())
                             ->required()
                             ->columnSpan(1),
                         
