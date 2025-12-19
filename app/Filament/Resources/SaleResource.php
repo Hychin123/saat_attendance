@@ -94,6 +94,7 @@ class SaleResource extends Resource
                         Forms\Components\TextInput::make('customer_name')
                             ->label('Customer Name')
                             ->maxLength(255)
+                            ->required()
                             ->columnSpan(1),
                         
                         Forms\Components\Select::make('customer_gender')
@@ -103,18 +104,21 @@ class SaleResource extends Resource
                                 'Female' => 'Female',
                                 'Other' => 'Other',
                             ])
+                            ->required()
                             ->columnSpan(1),
                         
                         Forms\Components\TextInput::make('customer_phone')
                             ->label('Phone Number')
                             ->tel()
+                            ->required()
                             ->maxLength(20)
                             ->columnSpan(1),
                         
                         Forms\Components\TextInput::make('customer_location')
                             ->label('Location')
                             ->maxLength(255)
-                            ->columnSpanFull(),
+                            ->required()
+                            ->columnSpan(1),
                         
                         Map::make('location')
                             ->label('Map Location')
@@ -145,16 +149,19 @@ class SaleResource extends Resource
                         Forms\Components\TextInput::make('location_product')
                             ->label('Product Location')
                             ->maxLength(255)
+                            ->required()
                             ->columnSpan(1),
                         
                         Forms\Components\TextInput::make('water_filter_cabinet_id')
                             ->label('Water Filter Cabinet ID')
                             ->maxLength(255)
+                            ->required()
                             ->columnSpan(1),
                         
                         Forms\Components\TextInput::make('board_id')
                             ->label('Board ID')
                             ->maxLength(255)
+                            ->required()
                             ->columnSpan(1),
                     ])->columns(2)->collapsible(),
 
@@ -355,7 +362,7 @@ class SaleResource extends Resource
                     ->copyable(),
                 
                 Tables\Columns\TextColumn::make('customer.name')
-                    ->label('Customer')
+                    ->label('Sale Name')
                     ->searchable()
                     ->sortable(),
                 
