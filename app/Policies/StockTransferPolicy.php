@@ -13,6 +13,7 @@ class StockTransferPolicy
     public function viewAny(User $user): bool
     {
         return $user->isSuperAdmin() 
+            || $user->hasPermission('view', 'stock_transfers')
             || $user->role?->name === 'HR Manager'
             || $user->role?->name === 'Warehouse Manager';
     }
@@ -20,6 +21,7 @@ class StockTransferPolicy
     public function view(User $user, StockTransfer $stockTransfer): bool
     {
         return $user->isSuperAdmin() 
+            || $user->hasPermission('view', 'stock_transfers')
             || $user->role?->name === 'HR Manager'
             || $user->role?->name === 'Warehouse Manager';
     }
@@ -27,6 +29,7 @@ class StockTransferPolicy
     public function create(User $user): bool
     {
         return $user->isSuperAdmin() 
+            || $user->hasPermission('create', 'stock_transfers')
             || $user->role?->name === 'HR Manager'
             || $user->role?->name === 'Warehouse Manager';
     }
@@ -34,6 +37,7 @@ class StockTransferPolicy
     public function update(User $user, StockTransfer $stockTransfer): bool
     {
         return $user->isSuperAdmin() 
+            || $user->hasPermission('edit', 'stock_transfers')
             || $user->role?->name === 'HR Manager'
             || $user->role?->name === 'Warehouse Manager';
     }
@@ -41,6 +45,7 @@ class StockTransferPolicy
     public function delete(User $user, StockTransfer $stockTransfer): bool
     {
         return $user->isSuperAdmin() 
+            || $user->hasPermission('delete', 'stock_transfers')
             || $user->role?->name === 'HR Manager'
             || $user->role?->name === 'Warehouse Manager';
     }

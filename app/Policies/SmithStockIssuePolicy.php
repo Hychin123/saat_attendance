@@ -13,6 +13,7 @@ class SmithStockIssuePolicy
     public function viewAny(User $user): bool
     {
         return $user->isSuperAdmin() 
+            || $user->hasPermission('view', 'smith_stock_issues')
             || $user->role?->name === 'HR Manager'
             || $user->role?->name === 'Warehouse Manager'
             || $user->role?->name === 'Smith';
@@ -21,6 +22,7 @@ class SmithStockIssuePolicy
     public function view(User $user, SmithStockIssue $smithStockIssue): bool
     {
         return $user->isSuperAdmin() 
+            || $user->hasPermission('view', 'smith_stock_issues')
             || $user->role?->name === 'HR Manager'
             || $user->role?->name === 'Warehouse Manager'
             || ($user->role?->name === 'Smith' && $user->id === $smithStockIssue->user_id);
@@ -29,6 +31,7 @@ class SmithStockIssuePolicy
     public function create(User $user): bool
     {
         return $user->isSuperAdmin() 
+            || $user->hasPermission('create', 'smith_stock_issues')
             || $user->role?->name === 'HR Manager'
             || $user->role?->name === 'Warehouse Manager'
             || $user->role?->name === 'Smith';
@@ -36,7 +39,7 @@ class SmithStockIssuePolicy
 
     public function update(User $user, SmithStockIssue $smithStockIssue): bool
     {
-        if ($user->isSuperAdmin() || $user->role?->name === 'HR Manager' || $user->role?->name === 'Warehouse Manager') {
+        if ($user->isSuperAdmin() || $user->hasPermission('edit', 'smith_stock_issues') || $user->role?->name === 'HR Manager' || $user->role?->name === 'Warehouse Manager') {
             return true;
         }
         
@@ -49,6 +52,7 @@ class SmithStockIssuePolicy
     public function delete(User $user, SmithStockIssue $smithStockIssue): bool
     {
         return $user->isSuperAdmin() 
+            || $user->hasPermission('delete', 'smith_stock_issues')
             || $user->role?->name === 'HR Manager'
             || $user->role?->name === 'Warehouse Manager';
     }
@@ -66,6 +70,7 @@ class SmithStockIssuePolicy
     public function approve(User $user): bool
     {
         return $user->isSuperAdmin() 
+            || $user->hasPermission('edit', 'smith_stock_issues')
             || $user->role?->name === 'HR Manager'
             || $user->role?->name === 'Warehouse Manager';
     }

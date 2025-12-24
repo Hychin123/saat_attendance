@@ -13,6 +13,7 @@ class MaterialAdjustmentPolicy
     public function viewAny(User $user): bool
     {
         return $user->isSuperAdmin() 
+            || $user->hasPermission('view', 'material_adjustments')
             || $user->role?->name === 'HR Manager'
             || $user->role?->name === 'Warehouse Manager'
             || $user->role?->name === 'Smith';
@@ -21,6 +22,7 @@ class MaterialAdjustmentPolicy
     public function view(User $user, MaterialAdjustment $materialAdjustment): bool
     {
         return $user->isSuperAdmin() 
+            || $user->hasPermission('view', 'material_adjustments')
             || $user->role?->name === 'HR Manager'
             || $user->role?->name === 'Warehouse Manager'
             || ($user->role?->name === 'Smith' && $user->id === $materialAdjustment->user_id);
@@ -29,6 +31,7 @@ class MaterialAdjustmentPolicy
     public function create(User $user): bool
     {
         return $user->isSuperAdmin() 
+            || $user->hasPermission('create', 'material_adjustments')
             || $user->role?->name === 'HR Manager'
             || $user->role?->name === 'Warehouse Manager'
             || $user->role?->name === 'Smith';
@@ -36,7 +39,7 @@ class MaterialAdjustmentPolicy
 
     public function update(User $user, MaterialAdjustment $materialAdjustment): bool
     {
-        if ($user->isSuperAdmin() || $user->role?->name === 'HR Manager' || $user->role?->name === 'Warehouse Manager') {
+        if ($user->isSuperAdmin() || $user->hasPermission('edit', 'material_adjustments') || $user->role?->name === 'HR Manager' || $user->role?->name === 'Warehouse Manager') {
             return true;
         }
         
@@ -49,6 +52,7 @@ class MaterialAdjustmentPolicy
     public function delete(User $user, MaterialAdjustment $materialAdjustment): bool
     {
         return $user->isSuperAdmin() 
+            || $user->hasPermission('delete', 'material_adjustments')
             || $user->role?->name === 'HR Manager'
             || $user->role?->name === 'Warehouse Manager';
     }

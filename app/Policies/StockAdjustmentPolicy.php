@@ -13,6 +13,7 @@ class StockAdjustmentPolicy
     public function viewAny(User $user): bool
     {
         return $user->isSuperAdmin() 
+            || $user->hasPermission('view', 'stock_adjustments')
             || $user->role?->name === 'HR Manager'
             || $user->role?->name === 'Warehouse Manager';
     }
@@ -20,6 +21,7 @@ class StockAdjustmentPolicy
     public function view(User $user, StockAdjustment $stockAdjustment): bool
     {
         return $user->isSuperAdmin() 
+            || $user->hasPermission('view', 'stock_adjustments')
             || $user->role?->name === 'HR Manager'
             || $user->role?->name === 'Warehouse Manager';
     }
@@ -27,6 +29,7 @@ class StockAdjustmentPolicy
     public function create(User $user): bool
     {
         return $user->isSuperAdmin() 
+            || $user->hasPermission('create', 'stock_adjustments')
             || $user->role?->name === 'HR Manager'
             || $user->role?->name === 'Warehouse Manager';
     }
@@ -34,6 +37,7 @@ class StockAdjustmentPolicy
     public function update(User $user, StockAdjustment $stockAdjustment): bool
     {
         return $user->isSuperAdmin() 
+            || $user->hasPermission('edit', 'stock_adjustments')
             || $user->role?->name === 'HR Manager'
             || $user->role?->name === 'Warehouse Manager';
     }
@@ -41,6 +45,7 @@ class StockAdjustmentPolicy
     public function delete(User $user, StockAdjustment $stockAdjustment): bool
     {
         return $user->isSuperAdmin() 
+            || $user->hasPermission('delete', 'stock_adjustments')
             || $user->role?->name === 'HR Manager'
             || $user->role?->name === 'Warehouse Manager';
     }
