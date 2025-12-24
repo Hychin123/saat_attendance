@@ -136,6 +136,8 @@ class RoleResource extends Resource
                                                     self::getPermissionCheckboxes('Stock Transfers', 'stock_transfers'),
                                                     self::getPermissionCheckboxes('Stock Adjustments', 'stock_adjustments'),
                                                     self::getPermissionCheckboxes('Stock Movements', 'stock_movements'),
+                                                    self::getPermissionCheckboxes('Sets/Kits', 'sets'),
+                                                    self::getPermissionCheckboxes('Use Sets', 'set_usages'),
                                                 ]),
                                         ]),
                                     ]),

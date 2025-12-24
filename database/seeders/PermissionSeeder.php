@@ -45,6 +45,10 @@ class PermissionSeeder extends Seeder
             'machine_filters',
             'filter_replacements',
             'machine_water_usage',
+            
+            // Sets/Kits Management
+            'sets',
+            'set_usages',
         ];
         
         $actions = [
