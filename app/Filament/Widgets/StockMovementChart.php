@@ -12,6 +12,15 @@ class StockMovementChart extends ChartWidget
     
     protected static ?int $sort = 2;
 
+    public static function canView(): bool
+    {
+        return auth()->user()->isSuperAdmin() 
+            || auth()->user()->hasPermission('view', 'stock_movements')
+            || auth()->user()->hasPermission('view', 'stocks')
+            || auth()->user()->role?->name === 'HR Manager'
+            || auth()->user()->role?->name === 'Warehouse Manager';
+    }
+
     protected function getData(): array
     {
         $days = 30;

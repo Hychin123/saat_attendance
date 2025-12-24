@@ -16,6 +16,15 @@ class LowStockItemsTable extends BaseWidget
     
     protected int | string | array $columnSpan = 'full';
 
+    public static function canView(): bool
+    {
+        return auth()->user()->isSuperAdmin() 
+            || auth()->user()->hasPermission('view', 'stocks')
+            || auth()->user()->hasPermission('view', 'items')
+            || auth()->user()->role?->name === 'HR Manager'
+            || auth()->user()->role?->name === 'Warehouse Manager';
+    }
+
     public function table(Table $table): Table
     {
         return $table

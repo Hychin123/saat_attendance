@@ -15,6 +15,15 @@ class SalesMapWidget extends MapTableWidget
 
     protected static ?int $sort = 4;
 
+    public static function canView(): bool
+    {
+        return auth()->user()->isSuperAdmin() 
+            || auth()->user()->hasPermission('view', 'sales')
+            || auth()->user()->role?->name === 'HR Manager'
+            || auth()->user()->role?->name === 'Sales Manager'
+            || auth()->user()->role?->name === 'Sales Agent';
+    }
+
     protected int|string|array $columnSpan = 'full';
 
     protected static ?string $maxHeight = '500px';

@@ -12,6 +12,15 @@ use Illuminate\Support\Facades\DB;
 
 class WarehouseStatsWidget extends BaseWidget
 {
+    public static function canView(): bool
+    {
+        return auth()->user()->isSuperAdmin() 
+            || auth()->user()->hasPermission('view', 'warehouses')
+            || auth()->user()->hasPermission('view', 'stocks')
+            || auth()->user()->role?->name === 'HR Manager'
+            || auth()->user()->role?->name === 'Warehouse Manager';
+    }
+
     protected function getStats(): array
     {
         $totalItems = Item::where('is_active', true)->count();
