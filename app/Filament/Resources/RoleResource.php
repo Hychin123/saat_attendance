@@ -170,6 +170,23 @@ class RoleResource extends Resource
                                                 ]),
                                         ]),
                                     ]),
+                                
+                                Forms\Components\Tabs\Tab::make('Machine Management')
+                                    ->schema([
+                                        Forms\Components\Split::make([
+                                            Forms\Components\Section::make('')
+                                                ->schema([
+                                                    self::getPermissionCheckboxes('Machines', 'machines'),
+                                                    self::getPermissionCheckboxes('Filters', 'filters'),
+                                                    self::getPermissionCheckboxes('Machine Filters', 'machine_filters'),
+                                                ]),
+                                            Forms\Components\Section::make('')
+                                                ->schema([
+                                                    self::getPermissionCheckboxes('Filter Replacements', 'filter_replacements'),
+                                                    self::getPermissionCheckboxes('Machine Water Usage', 'machine_water_usage'),
+                                                ]),
+                                        ]),
+                                    ]),
                             ])
                             ->columnSpanFull(),
                     ])

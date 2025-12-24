@@ -38,6 +38,13 @@ class PermissionSeeder extends Seeder
             'sales',
             'payments',
             'commissions',
+            
+            // Machine Management
+            'machines',
+            'filters',
+            'machine_filters',
+            'filter_replacements',
+            'machine_water_usage',
         ];
         
         $actions = [
