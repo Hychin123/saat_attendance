@@ -13,6 +13,7 @@ class WarehousePolicy
     public function viewAny(User $user): bool
     {
         return $user->isSuperAdmin() 
+            || $user->hasPermission('view', 'warehouses')
             || $user->role?->name === 'HR Manager'
             || $user->role?->name === 'Warehouse Manager';
     }
@@ -20,6 +21,7 @@ class WarehousePolicy
     public function view(User $user, Warehouse $warehouse): bool
     {
         return $user->isSuperAdmin() 
+            || $user->hasPermission('view', 'warehouses')
             || $user->role?->name === 'HR Manager'
             || $user->role?->name === 'Warehouse Manager';
     }
@@ -27,6 +29,7 @@ class WarehousePolicy
     public function create(User $user): bool
     {
         return $user->isSuperAdmin() 
+            || $user->hasPermission('create', 'warehouses')
             || $user->role?->name === 'HR Manager'
             || $user->role?->name === 'Warehouse Manager';
     }
@@ -34,6 +37,7 @@ class WarehousePolicy
     public function update(User $user, Warehouse $warehouse): bool
     {
         return $user->isSuperAdmin() 
+            || $user->hasPermission('edit', 'warehouses')
             || $user->role?->name === 'HR Manager'
             || $user->role?->name === 'Warehouse Manager';
     }
@@ -41,6 +45,7 @@ class WarehousePolicy
     public function delete(User $user, Warehouse $warehouse): bool
     {
         return $user->isSuperAdmin() 
+            || $user->hasPermission('delete', 'warehouses')
             || $user->role?->name === 'HR Manager'
             || $user->role?->name === 'Warehouse Manager';
     }

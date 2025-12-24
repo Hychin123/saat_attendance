@@ -13,6 +13,7 @@ class ItemPolicy
     public function viewAny(User $user): bool
     {
         return $user->isSuperAdmin() 
+            || $user->hasPermission('view', 'items')
             || $user->role?->name === 'HR Manager'
             || $user->role?->name === 'Warehouse Manager';
     }
@@ -20,6 +21,7 @@ class ItemPolicy
     public function view(User $user, Item $item): bool
     {
         return $user->isSuperAdmin() 
+            || $user->hasPermission('view', 'items')
             || $user->role?->name === 'HR Manager'
             || $user->role?->name === 'Warehouse Manager';
     }
@@ -27,6 +29,7 @@ class ItemPolicy
     public function create(User $user): bool
     {
         return $user->isSuperAdmin() 
+            || $user->hasPermission('create', 'items')
             || $user->role?->name === 'HR Manager'
             || $user->role?->name === 'Warehouse Manager';
     }
@@ -34,6 +37,7 @@ class ItemPolicy
     public function update(User $user, Item $item): bool
     {
         return $user->isSuperAdmin() 
+            || $user->hasPermission('edit', 'items')
             || $user->role?->name === 'HR Manager'
             || $user->role?->name === 'Warehouse Manager';
     }
@@ -41,6 +45,7 @@ class ItemPolicy
     public function delete(User $user, Item $item): bool
     {
         return $user->isSuperAdmin() 
+            || $user->hasPermission('delete', 'items')
             || $user->role?->name === 'HR Manager'
             || $user->role?->name === 'Warehouse Manager';
     }

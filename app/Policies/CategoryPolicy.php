@@ -13,6 +13,7 @@ class CategoryPolicy
     public function viewAny(User $user): bool
     {
         return $user->isSuperAdmin() 
+            || $user->hasPermission('view', 'categories')
             || $user->role?->name === 'HR Manager'
             || $user->role?->name === 'Warehouse Manager';
     }
@@ -20,6 +21,7 @@ class CategoryPolicy
     public function view(User $user, Category $category): bool
     {
         return $user->isSuperAdmin() 
+            || $user->hasPermission('view', 'categories')
             || $user->role?->name === 'HR Manager'
             || $user->role?->name === 'Warehouse Manager';
     }
@@ -27,6 +29,7 @@ class CategoryPolicy
     public function create(User $user): bool
     {
         return $user->isSuperAdmin() 
+            || $user->hasPermission('create', 'categories')
             || $user->role?->name === 'HR Manager'
             || $user->role?->name === 'Warehouse Manager';
     }
@@ -34,6 +37,7 @@ class CategoryPolicy
     public function update(User $user, Category $category): bool
     {
         return $user->isSuperAdmin() 
+            || $user->hasPermission('edit', 'categories')
             || $user->role?->name === 'HR Manager'
             || $user->role?->name === 'Warehouse Manager';
     }
@@ -41,6 +45,7 @@ class CategoryPolicy
     public function delete(User $user, Category $category): bool
     {
         return $user->isSuperAdmin() 
+            || $user->hasPermission('delete', 'categories')
             || $user->role?->name === 'HR Manager'
             || $user->role?->name === 'Warehouse Manager';
     }

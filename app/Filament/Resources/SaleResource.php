@@ -55,6 +55,7 @@ class SaleResource extends Resource
                             ->options(User::whereNotNull('name')->pluck('name', 'id'))
                             ->searchable()
                             ->required()
+                            ->default(auth()->id())
                             ->helperText('Agent will receive 5% commission when sale is completed')
                             ->columnSpan(1),
                         

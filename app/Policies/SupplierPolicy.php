@@ -13,6 +13,7 @@ class SupplierPolicy
     public function viewAny(User $user): bool
     {
         return $user->isSuperAdmin() 
+            || $user->hasPermission('view', 'suppliers')
             || $user->role?->name === 'HR Manager'
             || $user->role?->name === 'Warehouse Manager';
     }
@@ -20,6 +21,7 @@ class SupplierPolicy
     public function view(User $user, Supplier $supplier): bool
     {
         return $user->isSuperAdmin() 
+            || $user->hasPermission('view', 'suppliers')
             || $user->role?->name === 'HR Manager'
             || $user->role?->name === 'Warehouse Manager';
     }
@@ -27,6 +29,7 @@ class SupplierPolicy
     public function create(User $user): bool
     {
         return $user->isSuperAdmin() 
+            || $user->hasPermission('create', 'suppliers')
             || $user->role?->name === 'HR Manager'
             || $user->role?->name === 'Warehouse Manager';
     }
@@ -34,6 +37,7 @@ class SupplierPolicy
     public function update(User $user, Supplier $supplier): bool
     {
         return $user->isSuperAdmin() 
+            || $user->hasPermission('edit', 'suppliers')
             || $user->role?->name === 'HR Manager'
             || $user->role?->name === 'Warehouse Manager';
     }
@@ -41,6 +45,7 @@ class SupplierPolicy
     public function delete(User $user, Supplier $supplier): bool
     {
         return $user->isSuperAdmin() 
+            || $user->hasPermission('delete', 'suppliers')
             || $user->role?->name === 'HR Manager'
             || $user->role?->name === 'Warehouse Manager';
     }
