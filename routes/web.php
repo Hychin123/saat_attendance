@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AttendanceController;
+use App\Http\Controllers\ChatbotController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -22,4 +23,12 @@ Route::prefix('attendance')->group(function () {
         Route::post('/process', [AttendanceController::class, 'processAttendance'])->name('attendance.process');
         Route::get('/status', [AttendanceController::class, 'getStatus'])->name('attendance.status');
     });
+});
+
+// Chatbot routes
+Route::middleware('auth')->group(function () {
+    Route::post('/chatbot/query', [ChatbotController::class, 'query'])->name('chatbot.query');
+    Route::get('/chatbot/test', function () {
+        return view('chatbot-test');
+    })->name('chatbot.test');
 });
