@@ -91,14 +91,12 @@ class ItemResource extends Resource
                         Forms\Components\TextInput::make('cost_price')
                             ->numeric()
                             ->prefix('$')
-                            ->default(0)
-                            ->required(),
+                            ->default(0),
                         
                         Forms\Components\TextInput::make('selling_price')
                             ->numeric()
                             ->prefix('$')
-                            ->default(0)
-                            ->required(),
+                            ->default(0),
                     ])->columns(2),
                 
                 Forms\Components\Section::make('Stock Settings')
