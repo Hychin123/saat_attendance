@@ -11,6 +11,12 @@ use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Filament\Infolists\Infolist;
+use Filament\Support\Enums\FontWeight;
+use Filament\Infolists\Components\IconEntry;
+use Filament\Infolists\Components\RepeatableEntry;
+use Filament\Infolists\Components\TextEntry;
+
 
 class ItemResource extends Resource
 {
@@ -209,6 +215,47 @@ class ItemResource extends Resource
             ->actions([
                 Tables\Actions\ViewAction::make(),
                 Tables\Actions\EditAction::make(),
+            ])
+            ->headerActions([
+                Tables\Actions\Action::make('viewAllItems')
+                    ->label('View All Items List')
+                    ->icon('heroicon-o-list-bullet')
+                    ->color('info')
+                    ->modalHeading('All Items Overview')
+                    ->modalWidth('7xl')
+                    ->infolist(fn (): Infolist => 
+                        Infolist::make()
+                            ->state(['items' => Item::with(['category', 'brand'])->get()])
+                            ->schema([
+                                RepeatableEntry::make('items')
+                                    ->label('Items')
+                                    // ->contained(false)
+                                    ->columns(7)
+                                    ->schema([
+                                        TextEntry::make('item_code')
+                                            ->label('Item Code')
+                                            ->weight(FontWeight::Bold),
+                                        TextEntry::make('item_name')
+                                            ->label('Item Name'),
+                                        TextEntry::make('category.category_name')
+                                            ->label('Category')
+                                            ->badge()
+                                            ->color('info'),
+                                        TextEntry::make('brand.brand_name')
+                                            ->label('Brand')
+                                            ->default('N/A'),
+                                        TextEntry::make('unit')
+                                            ->label('Unit')
+                                            ->badge(),
+                                        TextEntry::make('selling_price')
+                                            ->label('Price')
+                                            ->money('usd'),
+                                        IconEntry::make('is_active')
+                                            ->label('Active')
+                                            ->boolean(),
+                                    ]),
+                            ])
+                    ),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([

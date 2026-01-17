@@ -71,6 +71,10 @@ class StockResource extends Resource
     {
         return $table
             ->columns([
+                Tables\Columns\ImageColumn::make('item.image')
+                    ->label('Image')
+                    ->circular()
+                    ->defaultImageUrl(url('/images/placeholder.png')),
                 Tables\Columns\TextColumn::make('item.item_name')
                     ->searchable()
                     ->sortable(),
