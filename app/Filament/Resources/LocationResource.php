@@ -35,7 +35,8 @@ class LocationResource extends Resource
                 Forms\Components\TextInput::make('location_code')
                     ->required()
                     ->maxLength(255)
-                    ->unique(ignoreRecord: true),
+                    ->unique(ignoreRecord: true)
+                    ->columnSpan(2),
                 Forms\Components\TextInput::make('rack')
                     ->maxLength(255),
                 Forms\Components\TextInput::make('shelf')
@@ -48,7 +49,8 @@ class LocationResource extends Resource
                 Forms\Components\Toggle::make('is_active')
                     ->required()
                     ->default(true),
-            ]);
+            ])
+            ->columns(3);
     }
 
     public static function table(Table $table): Table

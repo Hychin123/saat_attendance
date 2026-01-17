@@ -20,9 +20,9 @@ class StockInResource extends Resource
     protected static ?string $model = StockIn::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-arrow-down-tray';
-    
+
     protected static ?string $navigationGroup = 'Stock Operations';
-    
+
     protected static ?string $navigationLabel = 'Stock In (Receive)';
 
     protected static ?int $navigationSort = 2;
@@ -37,8 +37,8 @@ class StockInResource extends Resource
                             ->label('Reference No.')
                             ->disabled()
                             ->dehydrated(false)
-                            ->default(fn () => StockIn::generateReferenceNo()),
-                        
+                            ->default(fn() => StockIn::generateReferenceNo()),
+
                         Forms\Components\Select::make('supplier_id')
                             ->relationship('supplier', 'supplier_name')
                             ->required()
@@ -52,24 +52,24 @@ class StockInResource extends Resource
                                 Forms\Components\Textarea::make('address'),
                                 Forms\Components\TextInput::make('contact_person'),
                             ]),
-                        
+
                         Forms\Components\Select::make('warehouse_id')
                             ->relationship('warehouse', 'warehouse_name')
                             ->required()
                             ->searchable()
                             ->preload()
                             ->live(),
-                        
+
                         Forms\Components\DatePicker::make('received_date')
                             ->required()
                             ->default(now()),
-                        
+
                         Forms\Components\Select::make('received_by')
                             ->relationship('receivedByUser', 'name')
                             ->required()
                             ->default(auth()->id())
                             ->searchable(),
-                        
+
                         Forms\Components\Select::make('status')
                             ->options([
                                 'PENDING' => 'Pending',
@@ -78,11 +78,11 @@ class StockInResource extends Resource
                             ])
                             ->default('PENDING')
                             ->required(),
-                        
+
                         Forms\Components\Textarea::make('notes')
                             ->columnSpanFull(),
                     ])->columns(2),
-                
+
                 Forms\Components\Section::make('Items')
                     ->schema([
                         Forms\Components\Repeater::make('items')
@@ -94,7 +94,7 @@ class StockInResource extends Resource
                                     ->searchable()
                                     ->preload()
                                     ->columnSpan(2),
-                                
+
                                 Forms\Components\Select::make('location_id')
                                     ->label('Location (Rack/Shelf/Bin)')
                                     ->options(function (Get $get) {
@@ -109,18 +109,18 @@ class StockInResource extends Resource
                                     ->required()
                                     ->searchable()
                                     ->columnSpan(2),
-                                
+
                                 Forms\Components\TextInput::make('quantity')
                                     ->numeric()
                                     ->required()
                                     ->minValue(1)
                                     ->default(1),
-                                
+
                                 Forms\Components\TextInput::make('batch_number')
                                     ->label('Batch No.'),
-                                
+
                                 Forms\Components\DatePicker::make('expiry_date'),
-                                
+
                                 Forms\Components\TextInput::make('unit_cost')
                                     ->numeric()
                                     ->prefix('$')
@@ -142,30 +142,41 @@ class StockInResource extends Resource
                 Tables\Columns\TextColumn::make('reference_no')
                     ->searchable()
                     ->sortable(),
-                
-                Tables\Columns\TextColumn::make('supplier.supplier_name')
-                    ->searchable()
-                    ->sortable(),
-                
+
+                Tables\Columns\ImageColumn::make('items.item.image')
+                    ->label('Items')
+                    ->circular()
+                    ->stacked()
+                    ->limit(3)
+                    ->limitedRemainingText()
+                    ->defaultImageUrl(url('/images/placeholder.png')),
+
+                Tables\Columns\TextColumn::make('items.item.item_name')
+                    ->label('')
+                    ->listWithLineBreaks()
+                    ->bulleted()
+                    ->limitList(3)
+                    ->expandableLimitedList(),
+
                 Tables\Columns\TextColumn::make('warehouse.warehouse_name')
                     ->searchable()
                     ->sortable(),
-                
+
                 Tables\Columns\TextColumn::make('received_date')
                     ->date()
                     ->sortable(),
-                
+
                 Tables\Columns\TextColumn::make('receivedByUser.name')
                     ->label('Received By')
                     ->searchable(),
-                
+
                 Tables\Columns\BadgeColumn::make('status')
                     ->colors([
                         'warning' => 'PENDING',
                         'success' => 'RECEIVED',
                         'danger' => 'CANCELLED',
                     ]),
-                
+
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
@@ -179,12 +190,12 @@ class StockInResource extends Resource
                         'RECEIVED' => 'Received',
                         'CANCELLED' => 'Cancelled',
                     ]),
-                
+
                 Tables\Filters\SelectFilter::make('warehouse_id')
                     ->relationship('warehouse', 'warehouse_name')
                     ->searchable()
                     ->preload(),
-                
+
                 Tables\Filters\Filter::make('received_date')
                     ->form([
                         Forms\Components\DatePicker::make('from'),
@@ -194,11 +205,11 @@ class StockInResource extends Resource
                         return $query
                             ->when(
                                 $data['from'],
-                                fn (Builder $query, $date): Builder => $query->whereDate('received_date', '>=', $date),
+                                fn(Builder $query, $date): Builder => $query->whereDate('received_date', '>=', $date),
                             )
                             ->when(
                                 $data['until'],
-                                fn (Builder $query, $date): Builder => $query->whereDate('received_date', '<=', $date),
+                                fn(Builder $query, $date): Builder => $query->whereDate('received_date', '<=', $date),
                             );
                     }),
             ])
