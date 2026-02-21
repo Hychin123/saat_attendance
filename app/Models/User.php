@@ -41,6 +41,9 @@ class User extends Authenticatable implements FilamentUser, HasAvatar, HasName
         'profile_image',
         'telegram_chat_id',
         'telegram_notifications',
+        'google2fa_secret',
+        'google2fa_enabled',
+        'google2fa_enabled_at',
     ];
 
     /**
@@ -51,6 +54,7 @@ class User extends Authenticatable implements FilamentUser, HasAvatar, HasName
     protected $hidden = [
         'password',
         'remember_token',
+        'google2fa_secret',
     ];
 
     /**
@@ -66,6 +70,8 @@ class User extends Authenticatable implements FilamentUser, HasAvatar, HasName
             'salary' => 'decimal:2',
             'is_super_admin' => 'boolean',
             'telegram_notifications' => 'boolean',
+            'google2fa_enabled' => 'boolean',
+            'google2fa_enabled_at' => 'datetime',
         ];
     }
 

@@ -13,6 +13,7 @@
         "joaopaulolndev/filament-edit-profile": "^1.0",
         "laravel/framework": "^12.0",
         "laravel/tinker": "^2.10.1",
+        "pragmarx/google2fa-laravel": "^2.3",
         "pxlrbt/filament-excel": "^2.5",
         "simplesoftwareio/simple-qrcode": "^4.2",
         "telegram-bot/api": "^2.5"

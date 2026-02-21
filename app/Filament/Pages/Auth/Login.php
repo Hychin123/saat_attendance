@@ -25,7 +25,12 @@ class Login extends BaseLogin
             ]);
         }
 
-        return parent::authenticate();
+        $response = parent::authenticate();
+        
+        // After successful authentication, clear any previous 2FA verification
+        session()->forget('2fa_verified');
+        
+        return $response;
     }
 
     protected function getRateLimitKey($method, $component = null): string
