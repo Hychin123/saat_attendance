@@ -64,7 +64,10 @@ class AttendanceResource extends Resource
 
     public static function getEloquentQuery(): Builder
     {
-        $query = parent::getEloquentQuery();
+        $query = parent::getEloquentQuery()
+            ->with(['user', 'role']) // Eager load relationships to prevent N+1 queries
+            ->select('attendances.*'); // Explicitly select columns from attendances table
+        
         $user = auth()->user();
 
         // Super admin and HR Manager can see all attendances
@@ -277,6 +280,9 @@ class AttendanceResource extends Resource
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->defaultSort('date', 'desc')
+            ->defaultPaginationPageOption(25)
+            ->paginationPageOptions([10, 25, 50, 100])
+            ->deferLoading()
             ->filters([
                 Tables\Filters\SelectFilter::make('user')
                     ->relationship('user', 'name')
