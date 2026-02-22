@@ -309,10 +309,6 @@ class AttendanceResource extends Resource
                             );
                     }),
                 
-                Tables\Filters\Filter::make('today')
-                    ->query(fn (Builder $query): Builder => $query->whereDate('date', today()))
-                    ->toggle(),
-                
                 Tables\Filters\Filter::make('not_checked_out')
                     ->label('Not Checked Out')
                     ->query(fn (Builder $query): Builder => $query->whereNull('time_out'))
