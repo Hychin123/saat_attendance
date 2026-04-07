@@ -15,10 +15,9 @@ jobs:
       - name: Deploy via SSH
         uses: appleboy/ssh-action@master
         with:
-          host: saat.hychin.tech
-          port: 22
-          username: root
-          key: ${{ secrets.DEPLOY_KEY }}
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.DEPLOY_KEY }}      # ← match the secret name you set
           script: |
             cd /var/www/saat_attendance
             git fetch origin
@@ -27,4 +26,3 @@ jobs:
             npm install
             npm run build
             systemctl restart apache2
-          debug: true
