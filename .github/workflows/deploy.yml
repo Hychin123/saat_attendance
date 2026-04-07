@@ -27,3 +27,4 @@ jobs:
             npm install
             npm run build
             systemctl restart apache2
+          debug: true
