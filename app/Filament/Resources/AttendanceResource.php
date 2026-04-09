@@ -4,6 +4,7 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\AttendanceResource\Pages;
 use App\Models\Attendance;
+use App\Exports\AttendanceExport;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -13,6 +14,8 @@ use Illuminate\Database\Eloquent\Builder;
 use pxlrbt\FilamentExcel\Actions\Tables\ExportBulkAction;
 use pxlrbt\FilamentExcel\Exports\ExcelExport;
 use pxlrbt\FilamentExcel\Actions\Tables\ExportAction;
+use Maatwebsite\Excel\Facades\Excel;
+use Filament\Notifications\Notification;
 
 class AttendanceResource extends Resource
 {
@@ -20,7 +23,7 @@ class AttendanceResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-clock';
 
-    protected static ?string $navigationGroup = 'Attendance';
+    protected static ?string $navigationGroup = 'Attendance Management';
 
     protected static ?int $navigationSort = 3;
 
@@ -61,7 +64,10 @@ class AttendanceResource extends Resource
 
     public static function getEloquentQuery(): Builder
     {
-        $query = parent::getEloquentQuery();
+        $query = parent::getEloquentQuery()
+            ->with(['user', 'role']) // Eager load relationships to prevent N+1 queries
+            ->select('attendances.*'); // Explicitly select columns from attendances table
+        
         $user = auth()->user();
 
         // Super admin and HR Manager can see all attendances
@@ -274,6 +280,9 @@ class AttendanceResource extends Resource
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->defaultSort('date', 'desc')
+            ->defaultPaginationPageOption(25)
+            ->paginationPageOptions([10, 25, 50, 100])
+            ->deferLoading()
             ->filters([
                 Tables\Filters\SelectFilter::make('user')
                     ->relationship('user', 'name')
@@ -306,10 +315,6 @@ class AttendanceResource extends Resource
                             );
                     }),
                 
-                Tables\Filters\Filter::make('today')
-                    ->query(fn (Builder $query): Builder => $query->whereDate('date', today()))
-                    ->toggle(),
-                
                 Tables\Filters\Filter::make('not_checked_out')
                     ->label('Not Checked Out')
                     ->query(fn (Builder $query): Builder => $query->whereNull('time_out'))
@@ -320,28 +325,33 @@ class AttendanceResource extends Resource
                 Tables\Actions\DeleteAction::make(),
             ])
             ->headerActions([
-                ExportAction::make()
-                    ->exports([
-                        ExcelExport::make()
-                            ->fromTable()
-                            ->withFilename(fn () => 'attendances-' . date('Y-m-d'))
-                            ->withWriterType(\Maatwebsite\Excel\Excel::XLSX),
-                        ExcelExport::make('pdf')
-                            ->fromTable()
-                            ->withFilename(fn () => 'attendances-' . date('Y-m-d') . '.pdf')
-                            ->withWriterType(\Maatwebsite\Excel\Excel::DOMPDF),
-                    ]),
+                Tables\Actions\Action::make('export_excel')
+                    ->label('Export to Excel')
+                    ->icon('heroicon-o-arrow-down-tray')
+                    ->color('success')
+                    ->action(function ($livewire) {
+                        $query = $livewire->getFilteredTableQuery();
+                        $attendances = $query->with(['user', 'shift'])->get();
+                        
+                        return Excel::download(
+                            new AttendanceExport($attendances), 
+                            'attendance-report-' . date('Y-m-d') . '.xlsx'
+                        );
+                    }),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),
-                    ExportBulkAction::make()
-                        ->exports([
-                            ExcelExport::make()
-                                ->fromTable()
-                                ->withFilename(fn () => 'attendances-' . date('Y-m-d'))
-                                ->withWriterType(\Maatwebsite\Excel\Excel::XLSX),
-                        ]),
+                    Tables\Actions\BulkAction::make('export_selected')
+                        ->label('Export Selected')
+                        ->icon('heroicon-o-arrow-down-tray')
+                        ->color('success')
+                        ->action(function ($records) {
+                            return Excel::download(
+                                new AttendanceExport($records), 
+                                'attendance-selected-' . date('Y-m-d') . '.xlsx'
+                            );
+                        }),
                 ]),
             ]);
     }

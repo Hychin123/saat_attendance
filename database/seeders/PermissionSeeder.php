@@ -12,7 +12,45 @@ class PermissionSeeder extends Seeder
      */
     public function run(): void
     {
-        $resources = ['users', 'roles', 'attendances', 'permissions'];
+        $resources = [
+            // User & Attendance Management
+            'users',
+            'roles',
+            'permissions',
+            'attendances',
+            'shifts',
+            
+            // Warehouse Management
+            'warehouses',
+            'items',
+            'categories',
+            'brands',
+            'suppliers',
+            'locations',
+            'stocks',
+            'stock_ins',
+            'stock_outs',
+            'stock_transfers',
+            'stock_adjustments',
+            'stock_movements',
+            
+            // Sales Management
+            'sales',
+            'payments',
+            'commissions',
+            
+            // Machine Management
+            'machines',
+            'filters',
+            'machine_filters',
+            'filter_replacements',
+            'machine_water_usage',
+            
+            // Sets/Kits Management
+            'sets',
+            'set_usages',
+        ];
+        
         $actions = [
             ['name' => 'view', 'label' => 'View'],
             ['name' => 'create', 'label' => 'Create'],
@@ -22,12 +60,16 @@ class PermissionSeeder extends Seeder
 
         foreach ($resources as $resource) {
             foreach ($actions as $action) {
-                Permission::create([
-                    'name' => $action['name'],
-                    'resource' => $resource,
-                    'display_name' => $action['label'] . ' ' . ucfirst($resource),
-                    'description' => 'Allows user to ' . $action['name'] . ' ' . $resource,
-                ]);
+                Permission::updateOrCreate(
+                    [
+                        'name' => $action['name'],
+                        'resource' => $resource,
+                    ],
+                    [
+                        'display_name' => $action['label'] . ' ' . ucfirst(str_replace('_', ' ', $resource)),
+                        'description' => 'Allows user to ' . $action['name'] . ' ' . str_replace('_', ' ', $resource),
+                    ]
+                );
             }
         }
 

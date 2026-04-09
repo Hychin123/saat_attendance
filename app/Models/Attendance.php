@@ -19,6 +19,7 @@ class Attendance extends Model
     protected $fillable = [
         'user_id',
         'role_id',
+        'shift_id',
         'date',
         'time_in',
         'time_out',
@@ -31,6 +32,9 @@ class Attendance extends Model
         'check_out_longitude',
         'check_in_device',
         'check_out_device',
+        'is_late',
+        'late_minutes',
+        'work_hours',
     ];
 
     /**
@@ -42,6 +46,9 @@ class Attendance extends Model
         'date' => 'date',
         'time_in' => 'datetime',
         'time_out' => 'datetime',
+        'is_late' => 'boolean',
+        'late_minutes' => 'integer',
+        'work_hours' => 'decimal:2',
     ];
 
     /**
@@ -58,6 +65,14 @@ class Attendance extends Model
     public function role(): BelongsTo
     {
         return $this->belongsTo(Role::class);
+    }
+
+    /**
+     * Get the shift that owns the attendance.
+     */
+    public function shift(): BelongsTo
+    {
+        return $this->belongsTo(Shift::class);
     }
 
     /**
@@ -113,5 +128,57 @@ class Attendance extends Model
         return static::where('user_id', $userId)
             ->whereDate('date', Carbon::today())
             ->first();
+    }
+
+    /**
+     * Calculate work hours between time_in and time_out
+     */
+    public function calculateWorkHours(): ?float
+    {
+        if (!$this->time_in || !$this->time_out) {
+            return null;
+        }
+
+        return $this->time_in->diffInHours($this->time_out, true);
+    }
+
+    /**
+     * Check if attendance is late based on shift
+     */
+    public function checkIfLate(): array
+    {
+        if (!$this->shift || !$this->time_in) {
+            return ['is_late' => false, 'late_minutes' => 0];
+        }
+
+        $isLate = $this->shift->isLate($this->time_in);
+        $lateMinutes = $isLate ? $this->shift->getLateMinutes($this->time_in) : 0;
+
+        return [
+            'is_late' => $isLate,
+            'late_minutes' => $lateMinutes,
+        ];
+    }
+
+    /**
+     * Boot method to auto-calculate work hours and late status
+     */
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::saving(function ($attendance) {
+            // Calculate work hours if both time_in and time_out exist
+            if ($attendance->time_in && $attendance->time_out) {
+                $attendance->work_hours = $attendance->calculateWorkHours();
+            }
+
+            // Calculate late status if shift exists
+            if ($attendance->shift_id && $attendance->time_in) {
+                $lateInfo = $attendance->checkIfLate();
+                $attendance->is_late = $lateInfo['is_late'];
+                $attendance->late_minutes = $lateInfo['late_minutes'];
+            }
+        });
     }
 }

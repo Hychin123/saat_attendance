@@ -5,13 +5,18 @@ namespace App\Models;
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Filament\Models\Contracts\FilamentUser;
+use Filament\Models\Contracts\HasAvatar;
+use Filament\Models\Contracts\HasName;
 use Filament\Panel;
+use Carbon\Carbon;
+use Illuminate\Support\Facades\Storage;
 
-class User extends Authenticatable implements FilamentUser
+class User extends Authenticatable implements FilamentUser, HasAvatar, HasName
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasFactory, Notifiable;
@@ -27,12 +32,18 @@ class User extends Authenticatable implements FilamentUser
         'password',
         'is_super_admin',
         'age',
+        'gender',
         'school',
         'role_id',
         'salary',
         'kpa',
         'phone',
         'profile_image',
+        'telegram_chat_id',
+        'telegram_notifications',
+        'google2fa_secret',
+        'google2fa_enabled',
+        'google2fa_enabled_at',
     ];
 
     /**
@@ -43,6 +54,7 @@ class User extends Authenticatable implements FilamentUser
     protected $hidden = [
         'password',
         'remember_token',
+        'google2fa_secret',
     ];
 
     /**
@@ -57,6 +69,9 @@ class User extends Authenticatable implements FilamentUser
             'password' => 'hashed',
             'salary' => 'decimal:2',
             'is_super_admin' => 'boolean',
+            'telegram_notifications' => 'boolean',
+            'google2fa_enabled' => 'boolean',
+            'google2fa_enabled_at' => 'datetime',
         ];
     }
 
@@ -74,6 +89,51 @@ class User extends Authenticatable implements FilamentUser
     public function attendances(): HasMany
     {
         return $this->hasMany(Attendance::class);
+    }
+
+    /**
+     * Get the shifts assigned to this user.
+     */
+    public function shifts(): BelongsToMany
+    {
+        return $this->belongsToMany(Shift::class, 'user_shifts')
+            ->withPivot('effective_from', 'effective_to', 'is_primary')
+            ->withTimestamps();
+    }
+
+    /**
+     * Get the current active shift for the user on a given date.
+     */
+    public function getCurrentShift(?Carbon $date = null): ?Shift
+    {
+        $date = $date ?? now();
+        
+        return $this->shifts()
+            ->wherePivot('effective_from', '<=', $date->format('Y-m-d'))
+            ->where(function ($query) use ($date) {
+                $query->whereNull('user_shifts.effective_to')
+                    ->orWherePivot('effective_to', '>=', $date->format('Y-m-d'));
+            })
+            ->wherePivot('is_primary', true)
+            ->where('is_active', true)
+            ->first();
+    }
+
+    /**
+     * Get all active shifts for the user on a given date.
+     */
+    public function getActiveShifts(?Carbon $date = null): \Illuminate\Database\Eloquent\Collection
+    {
+        $date = $date ?? now();
+        
+        return $this->shifts()
+            ->wherePivot('effective_from', '<=', $date->format('Y-m-d'))
+            ->where(function ($query) use ($date) {
+                $query->whereNull('user_shifts.effective_to')
+                    ->orWherePivot('effective_to', '>=', $date->format('Y-m-d'));
+            })
+            ->where('is_active', true)
+            ->get();
     }
 
     /**
@@ -104,5 +164,21 @@ class User extends Authenticatable implements FilamentUser
     public function canAccessPanel(Panel $panel): bool
     {
         return true; // You can add custom logic here
+    }
+
+    /**
+     * Get the user's name for Filament.
+     */
+    public function getFilamentName(): string
+    {
+        return $this->name ?? $this->email;
+    }
+
+    /**
+     * Get the user's avatar URL for Filament.
+     */
+    public function getFilamentAvatarUrl(): ?string
+    {
+        return $this->profile_image ? Storage::url($this->profile_image) : null;
     }
 }

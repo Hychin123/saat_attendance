@@ -7,9 +7,60 @@ use Illuminate\Support\Facades\Gate;
 use App\Models\Attendance;
 use App\Models\User;
 use App\Models\Role;
+use App\Models\Permission;
+use App\Models\Shift;
+use App\Models\Warehouse;
+use App\Models\Item;
+use App\Models\Category;
+use App\Models\Brand;
+use App\Models\Supplier;
+use App\Models\Location;
+use App\Models\Stock;
+use App\Models\StockIn;
+use App\Models\StockOut;
+use App\Models\StockTransfer;
+use App\Models\StockAdjustment;
+use App\Models\StockMovement;
+use App\Models\Sale;
+use App\Models\Payment;
+use App\Models\Commission;
+use App\Models\MaterialUsed;
+use App\Models\MaterialAdjustment;
+use App\Models\SmithReturn;
+use App\Models\SmithStockIssue;
 use App\Policies\AttendancePolicy;
 use App\Policies\UserPolicy;
 use App\Policies\RolePolicy;
+use App\Policies\PermissionPolicy;
+use App\Policies\ShiftPolicy;
+use App\Policies\WarehousePolicy;
+use App\Policies\ItemPolicy;
+use App\Policies\CategoryPolicy;
+use App\Policies\BrandPolicy;
+use App\Policies\SupplierPolicy;
+use App\Policies\LocationPolicy;
+use App\Policies\StockPolicy;
+use App\Policies\StockInPolicy;
+use App\Policies\StockOutPolicy;
+use App\Policies\StockTransferPolicy;
+use App\Policies\StockAdjustmentPolicy;
+use App\Policies\StockMovementPolicy;
+use App\Policies\SalePolicy;
+use App\Policies\PaymentPolicy;
+use App\Policies\CommissionPolicy;
+use App\Policies\MaterialUsedPolicy;
+use App\Policies\MaterialAdjustmentPolicy;
+use App\Policies\SmithReturnPolicy;
+use App\Policies\SmithStockIssuePolicy;
+use App\Observers\AttendanceObserver;
+use App\Observers\SaleObserver;
+use App\Observers\StockTransferObserver;
+use App\Observers\StockAdjustmentObserver;
+use App\Observers\MaterialUsedObserver;
+use App\Observers\MaterialAdjustmentObserver;
+use App\Observers\SmithReturnObserver;
+use App\Observers\SmithStockIssueObserver;
+use App\Observers\StockObserver;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -26,8 +77,47 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // Register Observers
+        Attendance::observe(AttendanceObserver::class);
+        Sale::observe(SaleObserver::class);
+        StockTransfer::observe(StockTransferObserver::class);
+        StockAdjustment::observe(StockAdjustmentObserver::class);
+        MaterialUsed::observe(MaterialUsedObserver::class);
+        MaterialAdjustment::observe(MaterialAdjustmentObserver::class);
+        SmithReturn::observe(SmithReturnObserver::class);
+        SmithStockIssue::observe(SmithStockIssueObserver::class);
+        Stock::observe(StockObserver::class);
+        
+        // Attendance Management Policies
         Gate::policy(Attendance::class, AttendancePolicy::class);
         Gate::policy(User::class, UserPolicy::class);
         Gate::policy(Role::class, RolePolicy::class);
+        Gate::policy(Permission::class, PermissionPolicy::class);
+        Gate::policy(Shift::class, ShiftPolicy::class);
+        
+        // Warehouse Management Policies
+        Gate::policy(Warehouse::class, WarehousePolicy::class);
+        Gate::policy(Item::class, ItemPolicy::class);
+        Gate::policy(Category::class, CategoryPolicy::class);
+        Gate::policy(Brand::class, BrandPolicy::class);
+        Gate::policy(Supplier::class, SupplierPolicy::class);
+        Gate::policy(Location::class, LocationPolicy::class);
+        Gate::policy(Stock::class, StockPolicy::class);
+        Gate::policy(StockIn::class, StockInPolicy::class);
+        Gate::policy(StockOut::class, StockOutPolicy::class);
+        Gate::policy(StockTransfer::class, StockTransferPolicy::class);
+        Gate::policy(StockAdjustment::class, StockAdjustmentPolicy::class);
+        Gate::policy(StockMovement::class, StockMovementPolicy::class);
+        
+        
+        // Smith Management Policies
+        Gate::policy(MaterialUsed::class, MaterialUsedPolicy::class);
+        Gate::policy(MaterialAdjustment::class, MaterialAdjustmentPolicy::class);
+        Gate::policy(SmithReturn::class, SmithReturnPolicy::class);
+        Gate::policy(SmithStockIssue::class, SmithStockIssuePolicy::class);
+        // Sales Management Policies
+        Gate::policy(Sale::class, SalePolicy::class);
+        Gate::policy(Payment::class, PaymentPolicy::class);
+        Gate::policy(Commission::class, CommissionPolicy::class);
     }
 }
