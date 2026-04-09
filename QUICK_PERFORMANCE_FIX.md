@@ -142,7 +142,7 @@ Check these:
 4. **Check Logs**: Look for errors in `storage/logs/laravel.log`
 5. **Review Full Guide**: See `PERFORMANCE_OPTIMIZATION.md`
 
-## Need Help?
+## Need Help? or ok i will check it 
 
 If performance issues persist:
 1. Check server specs (CPU, RAM, disk space)
