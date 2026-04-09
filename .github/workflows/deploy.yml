@@ -18,13 +18,7 @@ jobs:
           host: saat.hychin.tech
           port: 22
           username: root
-          key: -----BEGIN OPENSSH PRIVATE KEY-----
-              b3BlbnNzaC1rZXktdjEAAAAABG5vbmUAAAAEbm9uZQAAAAAAAAABAAAAMwAAAAtzc2gtZW
-              QyNTUxOQAAACAr/5ISUbgsoSudzEVkH0daPSC2aGy+t3VKVrQP8EOj6AAAAJBW7q1GVu6t
-              RgAAAAtzc2gtZWQyNTUxOQAAACAr/5ISUbgsoSudzEVkH0daPSC2aGy+t3VKVrQP8EOj6A
-              AAAEDBulP0Gl3eFD/4IPh0kCkZiDFnj48MbFI4V56O94aV9Cv/khJRuCyhK53MRWQfR1o9
-              ILZobL63dUpWtA/wQ6PoAAAADWdpdGh1Yi1kZXBsb3k=
-              -----END OPENSSH PRIVATE KEY-----
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
             cd /var/www/saat_attendance
             git fetch origin
